@@ -1,0 +1,7 @@
+Renderer   
+RenderGraph (manager for renderpasses and their textures/views)
+    Renderpass
+Mesh
+    Material
+        Shader (shader code generated)
+            UniformBindGroup

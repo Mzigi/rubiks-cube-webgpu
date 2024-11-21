@@ -1,0 +1,1 @@
+{"version":3,"file":"gpuObject.js","sourceRoot":"","sources":["../../../src/rendering/core/gpuObject.ts"],"names":[],"mappings":"AAEA,MAAM,OAAO,SAAS;IAClB,QAAQ,CAAW;IACnB,KAAK,CAAS;IAEd,YAAY,QAAkB,EAAE,KAAa;QACzC,IAAI,CAAC,QAAQ,GAAG,QAAQ,CAAC;QACzB,IAAI,CAAC,KAAK,GAAG,KAAK,CAAC;IACvB,CAAC;CACJ"}
