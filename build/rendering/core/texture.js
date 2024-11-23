@@ -28,7 +28,7 @@ export class Texture extends GPUObject {
         if (this.matchCanvas) {
             this.size = [this.renderer.canvas.width, this.renderer.canvas.height, 1];
         }
-        console.log(`Creating texture (${this.label})`);
+        //console.log(`Creating texture (${this.label})`);
         this.gpuTexture = this.renderer.device.createTexture({
             size: this.size,
             usage: this.usage,
@@ -36,9 +36,9 @@ export class Texture extends GPUObject {
             label: this.label,
         });
     }
-    createView() {
+    createView(descriptor = {}) {
         if (!this.view) {
-            this.view = this.gpuTexture.createView();
+            this.view = this.gpuTexture.createView(descriptor);
         }
         return this.view;
     }
@@ -47,8 +47,12 @@ export class Texture extends GPUObject {
             source: imageBitmap,
             flipY: flipY,
         }, {
-            texture: this.gpuTexture
+            texture: this.gpuTexture,
         }, this.size);
+    }
+    copyExternalImageToTexture(source, destination, sourceSize) {
+        destination.texture = this.gpuTexture;
+        this.renderer.device.queue.copyExternalImageToTexture(source, destination, sourceSize);
     }
     hasView() {
         return !!this.view;

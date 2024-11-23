@@ -30,7 +30,7 @@ export class GBufferRenderPass extends RenderPass {
             "GBufferRenderPass-gBufferTextureAlbedo",
             [1,1,1],
             GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-            "bgra8unorm",
+            "rgba8unorm",
             true,
         );
         this.depthTexture = new Texture(renderer,
@@ -81,7 +81,7 @@ export class GBufferRenderPass extends RenderPass {
             {
                 view: this.gBufferTextureViews[0],
           
-                clearValue: [0.0, 0.0, 1.0, 1.0],
+                clearValue: [1.0, 1.0, 1.0, 1.0],
                 loadOp: 'clear',
                 storeOp: 'store',
               },
@@ -140,6 +140,10 @@ export class GBufferRenderPass extends RenderPass {
         if (!this.passEncoder) throw new Error("PassEncoder is missing from GBufferRenderPass");
 
         //this.passEncoder.setBindGroup(1, GBufferRenderPass.bindGroup.getBindGroup());
+
+        for (const model of this.renderer.getModels()) {
+            model.prepareRender();
+        }
 
         for (const model of this.renderer.getModels()) {
             model.render(this, "gBufferMat");

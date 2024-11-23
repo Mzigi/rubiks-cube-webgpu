@@ -44,7 +44,7 @@ export class Texture extends GPUObject {
             this.size = [this.renderer.canvas.width, this.renderer.canvas.height, 1];
         }
 
-        console.log(`Creating texture (${this.label})`);
+        //console.log(`Creating texture (${this.label})`);
 
         this.gpuTexture = (this.renderer.device as GPUDevice).createTexture({
             size: this.size,
@@ -54,24 +54,35 @@ export class Texture extends GPUObject {
         });
     }
 
-    createView(): GPUTextureView {
+    createView(descriptor: GPUTextureViewDescriptor = {}): GPUTextureView {
         if (!this.view) {
-            this.view = this.gpuTexture.createView();
+            this.view = this.gpuTexture.createView(descriptor);
         }
 
         return this.view;
     }
 
     copyFromExternalImage(imageBitmap: GPUCopyExternalImageSource, flipY: boolean = false): void {
-        (this.renderer.device as GPUDevice).queue.copyExternalImageToTexture({
-            source: imageBitmap,
-            flipY: flipY,
-        },
-        {
-            texture: this.gpuTexture
-        },
-        this.size)
-        ;
+        (this.renderer.device as GPUDevice).queue.copyExternalImageToTexture(
+            {
+                source: imageBitmap,
+                flipY: flipY,
+            },
+            {
+                texture: this.gpuTexture,
+            },
+            this.size
+        );
+    }
+
+    copyExternalImageToTexture(source: GPUCopyExternalImageSourceInfo, destination: GPUCopyExternalImageDestInfo, sourceSize: GPUExtent3DStrict): void {
+        destination.texture = this.gpuTexture;
+
+        (this.renderer.device as GPUDevice).queue.copyExternalImageToTexture(
+            source,
+            destination,
+            sourceSize,
+        );
     }
 
     hasView(): boolean {

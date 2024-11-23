@@ -95,8 +95,6 @@ export class BindGroup extends GPUObject {
             };
 
             this.bindGroupLayout = this.renderer.device.createBindGroupLayout(bindGroupLayoutDescriptor);
-
-            console.log(bindGroupLayoutDescriptor);
         }
 
         return this.bindGroupLayout;
@@ -144,6 +142,8 @@ export class Material {
 
     primitiveCullMode: GPUCullMode = "back";
 
+    static instance: Material;
+
     constructor(renderer: Renderer, label: string) {
         this.renderer = renderer;
         this.label = "Material-" + label;
@@ -177,12 +177,12 @@ export class Material {
     getPipelineLayout(): GPUPipelineLayout {
         if (!this.created) throw new Error("Material hasn't been initialized");
         if (!this.renderer.device) throw new Error("Renderer is missing Device");
-        if (!this.renderer.currentRenderGraph) throw new Error("Renderer is missing currentRenderGraph");
+        if (!this.renderer.renderGraph) throw new Error("Renderer is missing currentRenderGraph");
 
         if (!this.pipelineLayout) {
             const pipelineLayoutDescriptor: GPUPipelineLayoutDescriptor = {
                 label: "PipelineLayout-" + this.label,
-                bindGroupLayouts: [this.renderer.currentRenderGraph.bindGroup.getBindGroupLayout(), GBufferRenderPass.bindGroup.getBindGroupLayout(), this.renderer.modelBindGroup.getBindGroupLayout(), this.bindGroup.getBindGroupLayout()],
+                bindGroupLayouts: [this.renderer.renderGraph.bindGroup.getBindGroupLayout(), GBufferRenderPass.bindGroup.getBindGroupLayout(), this.renderer.modelBindGroup.getBindGroupLayout(), this.bindGroup.getBindGroupLayout()],
             };
 
             this.pipelineLayout = this.renderer.device.createPipelineLayout(pipelineLayoutDescriptor);
@@ -233,5 +233,19 @@ export class Material {
         }
 
         return this.pipeline;
+    }
+
+    static getId(): string {
+        throw new Error("Virtual method called");
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static get(materialType: any, renderer: Renderer): Material { //used for materials without any constructors
+        if (!materialType.instance) {
+            materialType.instance = new materialType(renderer, materialType.getId());
+            renderer.addMaterial(materialType.getId(), materialType.instance);
+        }
+
+        return materialType.instance;
     }
 }

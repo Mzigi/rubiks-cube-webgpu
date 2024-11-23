@@ -1,10 +1,10 @@
-import { Model } from "./core/model.js";
+import { Model, Vector3 } from "./core/model.js";
 import { RenderGraph } from "./core/renderGraph.js";
 import { Texture } from "./core/texture.js";
 
 import { BindGroup, Material } from "./core/material.js";
 import { CubeGBufferMaterial } from "./derived/materials/cubeGBuffer-material.js";
-import { Mesh } from "./core/mesh.js";
+import { GetCubeMesh } from "./data/meshes/cube.js";
 
 export class Renderer {
     canvas: HTMLCanvasElement;
@@ -17,13 +17,14 @@ export class Renderer {
 
     commandEncoder: GPUCommandEncoder | undefined;
 
-    modelUniformBuffer!: GPUBuffer;
+    //modelUniformBuffer!: GPUBuffer;
     modelBindGroup!: BindGroup;
 
-    currentRenderGraph: RenderGraph | undefined;
+    renderGraph: RenderGraph | undefined;
 
     private textures: Map<string, Texture> = new Map();
     private models: Model[] = [];
+    private materials: Map<string, Material> = new Map();
 
     success: true | false | undefined = undefined;
 
@@ -42,30 +43,33 @@ export class Renderer {
         if (!this.success || !this.device) return;
 
         this.device.addEventListener("uncapturedevent", () => {
-            console.error("oh no");
+            throw new Error("oh no! uncaptured event!!");
         });
 
         this.configureCanvas();
 
+        /*
         this.modelUniformBuffer = this.device.createBuffer({
             label: "ModelUniformBuffer-Renderer",
             size: 4 * 16 * 2,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
+        */
 
         this.modelBindGroup = new BindGroup(this, "ModelBindGroup");
         this.modelBindGroup.bindGroupEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                resource: {buffer: this.modelUniformBuffer},
+                resource: undefined,
                 buffer: {
                     type: "uniform",
                 }
             }
         ];
+        
 
-        const cubeMesh: Mesh = new Mesh();
+        /*const cubeMesh: Mesh = new Mesh();
         cubeMesh.positions = [
             //FRONT
             [0, 0, 0],
@@ -249,26 +253,23 @@ export class Renderer {
 
             [30,31,32],
             [33,34,35],
-        ];
-        
-        const cubeMaterialGBuffer: Material = new CubeGBufferMaterial(this, "CubeGBuffer");
+        ];*/
 
-        //for (let x: number = 0; x < 3; x++) {
-            //for (let y: number = 0; y < 3; y++) {
-                //for (let z: number = 0; z < 3; z++) {
-                    const cubeModel: Model = new Model(this, cubeMesh, "cube");
-                    cubeModel.gBufferMat = cubeMaterialGBuffer;
+        for (let x: number = 0; x < 3; x++) {
+            for (let y: number = 0; y < 3; y++) {
+                for (let z: number = 0; z < 3; z++) {
+                    const cubeModel: Model = new Model(this, GetCubeMesh(), "cube");
+                    cubeModel.gBufferMat = Material.get(CubeGBufferMaterial, this);
                     cubeModel.getIndexBuffer();
                     cubeModel.getVertexBuffer();
-                    //cubeModel.position.x = x;
-                    //cubeModel.position.y = y;
-                    //cubeModel.position.z = z;
+                    cubeModel.position = new Vector3(x * 2,y * 2,z * 2);
+                    cubeModel.size = new Vector3(2 / 3, 2 / 3, 2 / 3);
                     console.log(cubeModel.position);
 
                     this.addModel(cubeModel);
-                //}
-            //}
-        //}
+                }
+            }
+        }
     }
 
     configureCanvas(): void {
@@ -304,6 +305,14 @@ export class Renderer {
         return model.id;
     }
 
+    removeModel(model: Model): void {
+        if (model.id !== undefined) {
+            this.models[model.id] = this.models[this.models.length - 1];
+            this.models[model.id].id = model.id;
+            this.models.pop();
+        }
+    }
+
     getModels(): Model[] {
         return this.models;
     }
@@ -320,18 +329,25 @@ export class Renderer {
         return this.textures.get(textureName);
     }
 
-    render(renderGraph: RenderGraph): void {
+    addMaterial(materialId: string, material: Material): void {
+        if (!this.materials.get(materialId)) {
+            this.materials.set(materialId, material);
+        } else {
+            throw new Error(`Material with id "${materialId}" already exists`);
+        }
+    }
+
+    render(): void {
+        if (!this.renderGraph) throw new Error("Renderer is missing RenderGraph");
         if (!this.device) throw new Error("Renderer is missing Device");
 
         this.resizeCanvas();
-
-        this.currentRenderGraph = renderGraph;
 
         this.commandEncoder = this.device.createCommandEncoder({
             "label": "Renderer.commandEncoder"
         });
 
-        renderGraph.execute();
+        this.renderGraph.execute();
 
         this.device.queue.submit([this.commandEncoder.finish()]);
     }

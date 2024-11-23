@@ -1,5 +1,6 @@
 export class RenderGraph {
     renderer;
+    camera;
     renderPasses = new Map();
     bindGroup; //VIRTUAL
     uniformBuffer; //VIRTUAL

@@ -82,7 +82,7 @@ export class Mesh {
         return this.vertexBufferData;
     }
 
-    getIndexBufferData(): Uint16Array {
+    getIndexBufferData(): Uint16Array { //TODO: stop this and vertexBufferData
         if (!this.indexBufferData) {
             this.indexBufferData = new Uint16Array(this.triangles.length * 3);
 

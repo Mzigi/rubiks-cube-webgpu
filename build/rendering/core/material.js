@@ -47,7 +47,6 @@ export class BindGroup extends GPUObject {
                 entries: this.getBindGroupLayoutEntries(true),
             };
             this.bindGroupLayout = this.renderer.device.createBindGroupLayout(bindGroupLayoutDescriptor);
-            console.log(bindGroupLayoutDescriptor);
         }
         return this.bindGroupLayout;
     }
@@ -84,6 +83,7 @@ export class Material {
     fsShader;
     created = false;
     primitiveCullMode = "back";
+    static instance;
     constructor(renderer, label) {
         this.renderer = renderer;
         this.label = "Material-" + label;
@@ -115,12 +115,12 @@ export class Material {
             throw new Error("Material hasn't been initialized");
         if (!this.renderer.device)
             throw new Error("Renderer is missing Device");
-        if (!this.renderer.currentRenderGraph)
+        if (!this.renderer.renderGraph)
             throw new Error("Renderer is missing currentRenderGraph");
         if (!this.pipelineLayout) {
             const pipelineLayoutDescriptor = {
                 label: "PipelineLayout-" + this.label,
-                bindGroupLayouts: [this.renderer.currentRenderGraph.bindGroup.getBindGroupLayout(), GBufferRenderPass.bindGroup.getBindGroupLayout(), this.renderer.modelBindGroup.getBindGroupLayout(), this.bindGroup.getBindGroupLayout()],
+                bindGroupLayouts: [this.renderer.renderGraph.bindGroup.getBindGroupLayout(), GBufferRenderPass.bindGroup.getBindGroupLayout(), this.renderer.modelBindGroup.getBindGroupLayout(), this.bindGroup.getBindGroupLayout()],
             };
             this.pipelineLayout = this.renderer.device.createPipelineLayout(pipelineLayoutDescriptor);
         }
@@ -165,6 +165,17 @@ export class Material {
             this.pipeline = this.renderer.device.createRenderPipeline(pipelineDescriptor);
         }
         return this.pipeline;
+    }
+    static getId() {
+        throw new Error("Virtual method called");
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static get(materialType, renderer) {
+        if (!materialType.instance) {
+            materialType.instance = new materialType(renderer, materialType.getId());
+            renderer.addMaterial(materialType.getId(), materialType.instance);
+        }
+        return materialType.instance;
     }
 }
 //# sourceMappingURL=material.js.map

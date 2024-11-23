@@ -4,6 +4,7 @@ export class GPUObject {
     constructor(renderer, label) {
         this.renderer = renderer;
         this.label = label;
+        console.log(`Created ${this.label}`);
     }
 }
 //# sourceMappingURL=gpuObject.js.map

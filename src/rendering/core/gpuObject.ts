@@ -7,5 +7,7 @@ export class GPUObject {
     constructor(renderer: Renderer, label: string) {
         this.renderer = renderer;
         this.label = label;
+
+        console.log(`Created ${this.label}`);
     }
 }

@@ -7,6 +7,13 @@ export class BasicLightingFSShader extends Shader {
 @group(0) @binding(1) var gBufferAlbedo: texture_2d<f32>;
 @group(0) @binding(2) var gBufferDepth: texture_depth_2d;
 
+//directional light function
+fn calculateDirLight(normal: vec3f) -> vec3f {
+    var directionalLight : f32 = (dot(normal, normalize(vec3f(1,4,2))) + 0.5) / 2.0;
+    var dirLight : vec3f = (vec3f(1,1,1) * max(directionalLight, 0.0));
+    return dirLight;
+}
+
 @fragment
 fn fragmentMain(
     @builtin(position) coord : vec4f
@@ -33,15 +40,7 @@ fn fragmentMain(
 
     // remap depth into something a bit more visible
     let depth = (1.0 - rawDepth) * 50.0;
-    result = vec3(depth, depth, depth);
-
-    if (coord.y / 1080 < 0.333) {
-        result = normal.xyz * 0.5;
-    } else if (coord.y / 1080 < 0.666) {
-        result = albedo.rgb;
-    } else {
-        result = vec3(depth, depth, depth);
-    }
+    result = albedo * calculateDirLight(normal);
 
     return vec4(result, 1.0);
     //return vec4(result, 1.0);

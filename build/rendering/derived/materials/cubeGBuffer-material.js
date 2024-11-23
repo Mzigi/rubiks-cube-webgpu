@@ -88,9 +88,12 @@ export class CubeGBufferMaterial extends Material {
                 format: "rgba16float"
             },
             {
-                format: "bgra8unorm",
+                format: "rgba8unorm",
             }
         ];
+    }
+    static getId() {
+        return "cubeGBuffer";
     }
 }
 //# sourceMappingURL=cubeGBuffer-material.js.map

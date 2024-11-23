@@ -4,7 +4,8 @@ export class CubeGBufferVSShader extends Shader {
         super(renderer, label, ShaderType.Vertex);
         this.code = `
 struct Global {
-    viewProjectionMatrix: mat4x4f,
+    projectionMatrix: mat4x4f,
+    viewMatrix: mat4x4f,
 }
 
 struct Model {
@@ -27,9 +28,11 @@ fn vertexMain(
     @location(1) normal : vec3f,
     @location(2) uv : vec2f
 ) -> VertexOutput {
+    var viewProjectionMatrix : mat4x4f = global.projectionMatrix * global.viewMatrix;
+
     var output : VertexOutput;
     let worldPosition = (model.modelMatrix * vec4(position, 1.0)).xyz;
-    output.Position = global.viewProjectionMatrix * vec4(worldPosition, 1.0);
+    output.Position = viewProjectionMatrix * vec4(worldPosition, 1.0);
     output.fragNormal = normalize((model.normalModelMatrix * vec4(normal, 1.0)).xyz);
     output.fragUV = uv;
     return output;
@@ -61,7 +64,7 @@ fn fragmentMain(
 
   var output : GBufferOutput;
   output.normal = vec4(normalize(fragNormal), 1.0);
-  output.albedo = vec4(c, c, c, 1.0);
+  output.albedo = vec4(0, 1, 0, 1.0);
 
   return output;
 }

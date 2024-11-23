@@ -15,16 +15,19 @@ export class BasicLightingRenderPass extends RenderPass {
     vsShader: Shader;
     fsShader: Shader;
 
-    constructor(renderer: Renderer, renderGraph: RenderGraph, name: string, gBufferPass: GBufferRenderPass) {
+    targetTexture: GPUTexture;
+
+    constructor(renderer: Renderer, renderGraph: RenderGraph, name: string, gBufferPass: GBufferRenderPass, targetTexture: GPUTexture) {
         super(renderer, renderGraph, name);
 
         if (!renderer.device) throw new Error("Device is missing from Renderer");
         if (!renderer.context) throw new Error("Context is missing from Renderer");
         if (!renderer.presentationFormat) throw new Error("presentationFormat is missing from Renderer");
 
+        this.targetTexture = targetTexture;
         this.colorAttachments = [
             {
-                view: renderer.context.getCurrentTexture().createView(), //this should be set later
+                view: targetTexture.createView(), //this should be set later
           
                 clearValue: [0.0, 0.0, 1.0, 1.0],
                 loadOp: 'clear',
@@ -86,7 +89,7 @@ export class BasicLightingRenderPass extends RenderPass {
     executeVirtualBefore(): void {
         if (!this.renderer.context) throw new Error("Context is missing from Renderer");
 
-        this.colorAttachments[0].view = this.renderer.context.getCurrentTexture().createView();
+        this.colorAttachments[0].view = this.targetTexture.createView();
     }
 
     executeVirtual(): void {
