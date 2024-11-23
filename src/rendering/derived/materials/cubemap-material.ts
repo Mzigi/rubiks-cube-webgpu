@@ -43,12 +43,12 @@ export class CubemapMaterial extends Material {
         this.fsShader = new CubemapFSShader(this.renderer, this.label);
 
         const imgSrcs: string[] = [
-            '../assets/textures/cubemaps/ocean/right.jpg',
-            '../assets/textures/cubemaps/ocean/left.jpg',
-            '../assets/textures/cubemaps/ocean/top.jpg',
-            '../assets/textures/cubemaps/ocean/bottom.jpg',
-            '../assets/textures/cubemaps/ocean/front.jpg',
-            '../assets/textures/cubemaps/ocean/back.jpg',
+            './assets/textures/cubemaps/ocean/right.jpg',
+            './assets/textures/cubemaps/ocean/left.jpg',
+            './assets/textures/cubemaps/ocean/top.jpg',
+            './assets/textures/cubemaps/ocean/bottom.jpg',
+            './assets/textures/cubemaps/ocean/front.jpg',
+            './assets/textures/cubemaps/ocean/back.jpg',
         ];
         const promises: Promise<ImageBitmap>[] = imgSrcs.map(async (src: string) => {
             const response: Response = await fetch(src);
