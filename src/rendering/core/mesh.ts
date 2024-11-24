@@ -1,120 +1,198 @@
-export class UsedVertexAttributes {
-    usesPositions: boolean = false;
-    usesNormals: boolean = false;
-    usesUvs: boolean = false;
+import { Renderer } from "../renderer.js";
+import { BindGroup, Material } from "./material.js";
+import { MeshData } from "./meshData.js";
+import { RenderPass } from "./renderPass.js";
+import { mat4 } from "../../../node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js";
+import { GBufferRenderPass } from "../derived/renderPasses/gBuffer-renderPass.js";
 
-    matches(otherAttributes: UsedVertexAttributes): boolean {
-        return this.usesPositions === otherAttributes.usesPositions &&
-                this.usesNormals === otherAttributes.usesNormals &&
-                this.usesUvs === otherAttributes.usesUvs;
+export type MaterialName = "gBufferMat" | "shadowMat" | "forwardMat"; 
+
+/* DEPRECATED
+export class BufferData {
+    data: Float32Array;
+
+    constructor(data: Float32Array) {
+        this.data = data;
     }
 
-    contains(otherAttributes: UsedVertexAttributes): boolean {
-        return (this.usesPositions || this.usesPositions === otherAttributes.usesPositions) && 
-                (this.usesNormals || this.usesNormals === otherAttributes.usesNormals) &&
-                (this.usesUvs || this.usesUvs === otherAttributes.usesUvs);
+    getSize(): number {
+        return this.data.byteLength;
     }
 }
 
+export class VertexBufferData extends BufferData {
+
+}
+
+export class IndexBufferData extends BufferData {
+    indexCount: number;
+    
+    constructor(data: Float32Array, indexCount: number) {
+        super(data);
+
+        this.indexCount = indexCount;
+    }
+}
+*/
+
+export class Vector3 {
+    x: number = 0;
+    y: number = 0;
+    z: number = 0;
+
+    constructor(x: number, y: number, z: number) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+}
+
+/*
+struct Model {
+    modelMatrix: mat4x4,
+    normalModelMatrix: mat4x4,
+}
+*/
+
 export class Mesh {
-    positions: Array<[number, number, number]> = [];
-    normals: Array<[number, number, number]> = [];
-    uvs: Array<[number, number]> = [];
+    gBufferMat: Material | undefined;
+    shadowMat: Material | undefined;
+    forwardMat: Material | undefined;
 
-    triangles: Array<[number, number, number]> = [];
+    renderer: Renderer;
 
-    private vertexBufferData: Float32Array | undefined;
-    private indexBufferData: Uint16Array | undefined;
+    label: string;
 
-    //get arrays
-    getPositions(): Array<[number, number, number]> {
-        return this.positions;
-    }
+    mesh: MeshData;
 
-    getNormals(): Array<[number, number, number]> {
-        return this.normals;
-    }
+    private modelUniformBuffer: GPUBuffer;
+    private modelBindGroup: BindGroup;
 
-    getUvs(): Array<[number, number]> {
-        return this.uvs;
-    }
+    private vertexBuffer: GPUBuffer | undefined;
+    private indexBuffer: GPUBuffer | undefined;
 
-    //get count
-    getVertexCount(): number {
-        return this.positions.length;
-    }
+    id: number | undefined; //index in renderer's model array
 
-    getIndexCount(): number {
-        return this.triangles.length * 3;
-    }
+    position: Vector3 = new Vector3(0,0,0);
+    size: Vector3 = new Vector3(1,1,1);
 
-    //get buffers
-    getVertexBufferData(): Float32Array {
-        if (!this.vertexBufferData) {
-            if (this.getVertexCount() === 0) {
-                console.warn(`Mesh has no vertices`);
-            }
+    constructor(renderer: Renderer, mesh: MeshData, label: string = "Unknown") {
+        this.renderer = renderer;
+        this.mesh = mesh;
+        this.label = "Model-" + label;
 
-            this.vertexBufferData = new Float32Array(this.positions.length * 3 + this.normals.length * 3 + this.uvs.length * 2);
+        this.getVertexBuffer();
 
-            const usedAttributes: UsedVertexAttributes = this.getUsedAttributes();
+        if (!this.renderer.device) throw new Error("Device is missing from Renderer");
 
-            let offset: number = 0;
+        this.modelUniformBuffer = this.renderer.device.createBuffer({
+            label: "ModelUniformBuffer-Renderer",
+            size: 4 * 16 * 2,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
 
-            for (let i: number = 0; i < this.getVertexCount(); i++) {
-                if (usedAttributes.usesPositions) {
-                    this.vertexBufferData.set(this.getPositions()[i], offset);
-                    offset += 3;
-                }
-
-                if (usedAttributes.usesNormals) {
-                    this.vertexBufferData.set(this.getNormals()[i], offset);
-                    offset += 3;
-                }
-
-                if (usedAttributes.usesUvs) {
-                    this.vertexBufferData.set(this.getUvs()[i], offset);
-                    offset += 2;
+        this.modelBindGroup = new BindGroup(this.renderer, "ModelBindGroup");
+        this.modelBindGroup.bindGroupEntries = [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+                resource: {buffer: this.modelUniformBuffer},
+                buffer: {
+                    type: "uniform",
                 }
             }
+        ];
+    }
+
+    remove(): void {
+        if (this.id !== undefined) {
+            this.renderer.removeModel(this);
+        }
+    }
+
+    prepareRender(): void {
+        if (!this.renderer.device) throw new Error("Device is missing from Renderer");
+
+        //model uniform
+        const modelMatrix: Float32Array = mat4.translation([this.position.x, this.position.y, this.position.z]);
+        mat4.scale(modelMatrix, [this.size.x, this.size.y, this.size.z], modelMatrix);
+        this.renderer.device.queue.writeBuffer(this.modelUniformBuffer, 0, modelMatrix);
+
+        const invertTransposeModelMatrix: Float32Array = mat4.invert(modelMatrix);
+        mat4.transpose(invertTransposeModelMatrix, invertTransposeModelMatrix);
+        this.renderer.device.queue.writeBuffer(
+            this.modelUniformBuffer,
+            4 * 16,
+            invertTransposeModelMatrix.buffer,
+            invertTransposeModelMatrix.byteOffset,
+            invertTransposeModelMatrix.byteLength
+        );
+    }
+
+    render(renderPass: RenderPass, materialName: MaterialName): void {
+        if (!this.renderer.device) throw new Error("Device is missing from Renderer");
+        if (!renderPass.passEncoder) throw new Error("PassEncoder is missing from RenderPass");
+        if (!this.renderer.renderGraph) throw new Error("currentRenderGraph is missing from RenderPass");
+
+        const material: Material | undefined = this[materialName];
+
+        if (material && material.created) {
+            if (!this.mesh.getUsedAttributes().matches(material.usedVertexAttributes)) {
+                throw new Error(`Mesh (${this.label}) does not have the vertex attributes that match the ones Material (${material.label}) needs`);
+            }
+
+            //configure passEncoder
+            renderPass.passEncoder.setPipeline(material.getPipeline());
+
+            renderPass.passEncoder.setBindGroup(0, this.renderer.renderGraph.bindGroup.getBindGroup());
+            renderPass.passEncoder.setBindGroup(1, GBufferRenderPass.bindGroup.getBindGroup());
+            renderPass.passEncoder.setBindGroup(2, this.modelBindGroup.getBindGroup());
+            material.setBindGroups(renderPass);
+
+            renderPass.passEncoder.setVertexBuffer(0, this.getVertexBuffer());
+            renderPass.passEncoder.setIndexBuffer(this.getIndexBuffer(), "uint16");
+
+            renderPass.passEncoder.drawIndexed(this.mesh.getIndexCount());
+
+            //window.app.shouldClose = true;
+        } else {
+            //console.warn(material);
+            //console.log(`Material (${material?.label}) hasn't been created yet`);
+        }
+    }
+
+    getVertexBuffer(): GPUBuffer {
+        if (!this.renderer.device) throw new Error("Renderer is missing device");
+        
+        if (!this.vertexBuffer) {
+            this.vertexBuffer = this.renderer.device.createBuffer({
+                label: "VertexBuffer-" + this.label,
+                size: this.mesh.getVertexBufferData().byteLength,
+                usage: GPUBufferUsage.VERTEX,
+                mappedAtCreation: true,
+            });
+            const vertexBufferData: Float32Array = this.mesh.getVertexBufferData();
+            new Float32Array(this.vertexBuffer.getMappedRange()).set(vertexBufferData);
+            this.vertexBuffer.unmap();
+        }
+        
+        return this.vertexBuffer;
+    }
+
+    getIndexBuffer(): GPUBuffer {
+        if (!this.renderer.device) throw new Error("Renderer is missing device");
+        if (!this.indexBuffer) {
+            this.indexBuffer = this.renderer.device.createBuffer({
+                label: "IndexBuffer-" + this.label,
+                size: this.mesh.getIndexBufferData().byteLength,
+                usage: GPUBufferUsage.INDEX,
+                mappedAtCreation: true,
+            });
+            const indexBufferData: Uint16Array = this.mesh.getIndexBufferData();
+            new Uint16Array(this.indexBuffer.getMappedRange()).set(indexBufferData);
+            this.indexBuffer.unmap();
         }
 
-        return this.vertexBufferData;
-    }
-
-    getIndexBufferData(): Uint16Array { //TODO: stop this and vertexBufferData
-        if (!this.indexBufferData) {
-            this.indexBufferData = new Uint16Array(this.triangles.length * 3);
-
-            if (this.triangles.length === 0) {
-                console.warn(`Mesh has no indices`);
-            }
-
-            for (let i: number = 0; i < this.triangles.length; i++) {
-                this.indexBufferData.set(this.triangles[i], i * 3);
-            }
-        }
-
-        return this.indexBufferData;
-    }
-
-    //misc
-    getStride(): number {
-        let stride: number = 0;
-
-        if (this.getPositions().length > 0) stride += 3;
-        if (this.getNormals().length > 0) stride += 3;
-        if (this.getUvs().length > 0) stride += 2;
-
-        return stride;
-    }
-
-    getUsedAttributes(): UsedVertexAttributes {
-        const usedAttributes: UsedVertexAttributes = new UsedVertexAttributes();
-        usedAttributes.usesPositions = this.getPositions().length > 0;
-        usedAttributes.usesNormals = this.getNormals().length > 0;
-        usedAttributes.usesUvs = this.getUvs().length > 0;
-
-        return usedAttributes;
+        return this.indexBuffer;
     }
 }

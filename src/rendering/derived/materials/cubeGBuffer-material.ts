@@ -1,5 +1,5 @@
 import { BindGroup, Material } from "../../core/material.js";
-import { UsedVertexAttributes } from "../../core/mesh.js";
+import { UsedVertexAttributes } from "../../core/meshData.js";
 import { Texture } from "../../core/texture.js";
 import { Renderer } from "../../renderer.js";
 import { CubeGBufferFSShader, CubeGBufferVSShader } from "../../shaders/class/cubeGBuffer-shader.js";

@@ -1,6 +1,6 @@
 import { Camera } from "../../core/camera.js";
 import { BindGroup } from "../../core/material.js";
-import { Vector3 } from "../../core/model.js";
+import { Vector3 } from "../../core/mesh.js";
 import { RenderGraph } from "../../core/renderGraph.js";
 import { Renderer } from "../../renderer.js";
 import { BasicLightingRenderPass } from "../renderPasses/basicLighting-renderPass.js";
@@ -74,6 +74,7 @@ export class DefaultRenderGraph extends RenderGraph {
 
         this.gBufferPass.execute();
         this.basicLightingPass.execute();
+        
         this.forwardPass.execute();
     }
 }

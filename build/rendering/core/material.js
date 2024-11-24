@@ -169,13 +169,12 @@ export class Material {
     static getId() {
         throw new Error("Virtual method called");
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static get(materialType, renderer) {
-        if (!materialType.instance) {
-            materialType.instance = new materialType(renderer, materialType.getId());
-            renderer.addMaterial(materialType.getId(), materialType.instance);
+    static getDefault(renderer) {
+        if (!this.instance) {
+            this.instance = new this(renderer, this.getId());
+            renderer.addMaterial(this.getId(), this.instance);
         }
-        return materialType.instance;
+        return this.instance;
     }
 }
 //# sourceMappingURL=material.js.map

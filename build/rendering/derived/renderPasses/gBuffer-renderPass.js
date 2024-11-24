@@ -101,9 +101,6 @@ export class GBufferRenderPass extends RenderPass {
             throw new Error("PassEncoder is missing from GBufferRenderPass");
         //this.passEncoder.setBindGroup(1, GBufferRenderPass.bindGroup.getBindGroup());
         for (const model of this.renderer.getModels()) {
-            model.prepareRender();
-        }
-        for (const model of this.renderer.getModels()) {
             model.render(this, "gBufferMat");
         }
     }

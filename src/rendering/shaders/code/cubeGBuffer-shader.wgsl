@@ -1,3 +1,4 @@
+//VERTEX
 struct Global {
     projectionMatrix: mat4x4f,
     viewMatrix: mat4x4f,
@@ -30,5 +31,28 @@ fn vertexMain(
     output.Position = viewProjectionMatrix * vec4(worldPosition, 1.0);
     output.fragNormal = normalize((model.normalModelMatrix * vec4(normal, 1.0)).xyz);
     output.fragUV = uv;
+    return output;
+}
+
+//FRAGMENT
+@group(3) @binding(1) var textureSampler: sampler;
+@group(3) @binding(2) var textureAlbedo: texture_2d<f32>;
+
+struct GBufferOutput {
+    @location(0) normal : vec4f,
+
+    // Textures: diffuse color, specular color, smoothness, emissive etc. could go here
+    @location(1) albedo : vec4f,
+}
+
+@fragment
+fn fragmentMain(
+    @location(0) fragNormal: vec3f,
+    @location(1) fragUV : vec2f
+) -> GBufferOutput {
+    var output : GBufferOutput;
+    output.normal = vec4(normalize(fragNormal), 1.0);
+    output.albedo = textureSample(textureAlbedo, textureSampler, vec2f(fragUV.x, fragUV.y));
+
     return output;
 }

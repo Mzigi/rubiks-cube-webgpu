@@ -1,8 +1,7 @@
 import { App } from "../app.js";
 import { Game } from "../game.js";
 import { Camera } from "../rendering/core/camera.js";
-import { Material } from "../rendering/core/material.js";
-import { Model } from "../rendering/core/model.js";
+import { Mesh } from "../rendering/core/mesh.js";
 import { RenderGraph } from "../rendering/core/renderGraph.js";
 import { GetCubeMesh } from "../rendering/data/meshes/cube.js";
 import { CubemapMaterial } from "../rendering/derived/materials/cubemap-material.js";
@@ -68,8 +67,8 @@ export class Rubiks extends Game {
             //console.log(e.code);
         });
 
-        const cubemapModel: Model = new Model(this.renderer, GetCubeMesh(), "cubemap");
-        cubemapModel.forwardMat = Material.get(CubemapMaterial, this.renderer);
+        const cubemapModel: Mesh = new Mesh(this.renderer, GetCubeMesh(), "cubemap");
+        cubemapModel.forwardMat = CubemapMaterial.getDefault(this.renderer);
         cubemapModel.getIndexBuffer();
         cubemapModel.getVertexBuffer();
         

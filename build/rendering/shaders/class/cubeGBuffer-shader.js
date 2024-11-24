@@ -45,28 +45,26 @@ export class CubeGBufferFSShader extends Shader {
     constructor(renderer, label) {
         super(renderer, label, ShaderType.Fragment);
         this.code = `
-        struct GBufferOutput {
-  @location(0) normal : vec4f,
+@group(3) @binding(1) var textureSampler: sampler;
+@group(3) @binding(2) var textureAlbedo: texture_2d<f32>;
 
-  // Textures: diffuse color, specular color, smoothness, emissive etc. could go here
-  @location(1) albedo : vec4f,
+struct GBufferOutput {
+    @location(0) normal : vec4f,
+
+    // Textures: diffuse color, specular color, smoothness, emissive etc. could go here
+    @location(1) albedo : vec4f,
 }
 
 @fragment
 fn fragmentMain(
-  @location(0) fragNormal: vec3f,
-  @location(1) fragUV : vec2f
+    @location(0) fragNormal: vec3f,
+    @location(1) fragUV : vec2f
 ) -> GBufferOutput {
-  // faking some kind of checkerboard texture
-  let uv = floor(30.0 * fragUV);
-  var c = 0.2 + 0.5 * ((uv.x + uv.y) - 2.0 * floor((uv.x + uv.y) / 2.0));
-  c = 0.5;
+    var output : GBufferOutput;
+    output.normal = vec4(normalize(fragNormal), 1.0);
+    output.albedo = textureSample(textureAlbedo, textureSampler, vec2f(fragUV.x, fragUV.y));
 
-  var output : GBufferOutput;
-  output.normal = vec4(normalize(fragNormal), 1.0);
-  output.albedo = vec4(0, 1, 0, 1.0);
-
-  return output;
+    return output;
 }
   `;
         this.init();

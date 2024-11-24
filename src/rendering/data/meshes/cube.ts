@@ -1,8 +1,8 @@
-import { Mesh } from "../../core/mesh.js";
+import { MeshData } from "../../core/meshData.js";
 
-const cubeMesh: Mesh = new Mesh();
+const cubeMesh: MeshData = new MeshData();
 
-export function GetCubeMesh(): Mesh {
+export function GetCubeMesh(): MeshData {
     if (cubeMesh.getIndexCount() === 0) {
         cubeMesh.positions = [
             //FRONT
@@ -117,57 +117,57 @@ export function GetCubeMesh(): Mesh {
         cubeMesh.uvs = [
             //FRONT
             [0, 0],
-            [1, 0],
             [0, 1],
+            [1, 0],
 
             [1, 0],
-            [1, 1],
             [0, 1],
+            [1, 1],
 
             //LEFT
             [0, 0],
-            [0, 1],
             [1, 0],
+            [0, 1],
 
             [0, 1],
-            [1, 1],
             [1, 0],
+            [1, 1],
 
             //TOP
             [0, 0],
-            [1, 0],
             [0, 1],
+            [1, 0],
 
             [1, 0],
-            [1, 1],
             [0, 1],
+            [1, 1],
 
             //BACK
             [0, 0],
-            [0, 1],
             [1, 0],
+            [0, 1],
 
             [1, 0],
-            [0, 1],
             [1, 1],
+            [0, 1],
 
             //RIGHT
             [0, 0],
-            [1, 0],
             [0, 1],
+            [1, 0],
 
             [0, 1],
-            [1, 0],
             [1, 1],
+            [1, 0],
 
             //TOP
             [0, 0],
-            [0, 1],
             [1, 0],
+            [0, 1],
 
             [1, 0],
-            [0, 1],
             [1, 1],
+            [0, 1],
         ];
         cubeMesh.triangles = [
             [0,1,2],

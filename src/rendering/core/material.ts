@@ -1,7 +1,7 @@
 import { GBufferRenderPass } from "../derived/renderPasses/gBuffer-renderPass.js";
 import { Renderer } from "../renderer.js";
 import { GPUObject } from "./gpuObject.js";
-import { UsedVertexAttributes } from "./mesh.js";
+import { UsedVertexAttributes } from "./meshData.js";
 import { RenderPass } from "./renderPass.js";
 import { Shader } from "./shader.js";
 
@@ -32,6 +32,7 @@ group(3) { //material specific
     }
 }
 */
+
 
 export interface BindGroupEntry {
     binding: number;
@@ -122,6 +123,7 @@ export class BindGroup extends GPUObject {
         this.bindGroup = undefined;
     }
 }
+
 
 export class Material {
     renderer: Renderer;
@@ -239,13 +241,12 @@ export class Material {
         throw new Error("Virtual method called");
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static get(materialType: any, renderer: Renderer): Material { //used for materials without any constructors
-        if (!materialType.instance) {
-            materialType.instance = new materialType(renderer, materialType.getId());
-            renderer.addMaterial(materialType.getId(), materialType.instance);
+    static getDefault(renderer: Renderer): Material { //used for materials without any constructors
+        if (!this.instance) {
+            this.instance = new this(renderer, this.getId());
+            renderer.addMaterial(this.getId(), this.instance);
         }
 
-        return materialType.instance;
+        return this.instance;
     }
 }

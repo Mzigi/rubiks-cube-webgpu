@@ -1,5 +1,5 @@
 import { mat4 } from "../../../node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js";
-import { Vector3 } from "./model.js";
+import { Vector3 } from "./mesh.js";
 export class Camera {
     position;
     rotation;
@@ -26,6 +26,14 @@ export class Camera {
     getProjectionMatrix(aspect) {
         return mat4.perspective(this.fov * Math.PI / 180, aspect, this.nearZ, this.farZ);
         ;
+    }
+    getDirectionVector() {
+        const cameraRotation = mat4.rotationY(this.rotation.y * Math.PI / 180);
+        mat4.rotateX(cameraRotation, this.rotation.x * Math.PI / 180, cameraRotation);
+        mat4.rotateZ(cameraRotation, this.rotation.z * Math.PI / 180, cameraRotation);
+        mat4.translate(cameraRotation, [0, 0, -1], cameraRotation);
+        const [x, y, z] = mat4.getTranslation(cameraRotation);
+        return new Vector3(x, y, z);
     }
 }
 //# sourceMappingURL=camera.js.map

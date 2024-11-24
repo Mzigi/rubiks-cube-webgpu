@@ -44,7 +44,7 @@ struct Model {
     normalModelMatrix: mat4x4,
 }
 */
-export class Model {
+export class Mesh {
     gBufferMat;
     shadowMat;
     forwardMat;

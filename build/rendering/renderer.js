@@ -1,5 +1,5 @@
-import { Model, Vector3 } from "./core/model.js";
-import { BindGroup, Material } from "./core/material.js";
+import { Mesh, Vector3 } from "./core/mesh.js";
+import { BindGroup } from "./core/material.js";
 import { CubeGBufferMaterial } from "./derived/materials/cubeGBuffer-material.js";
 import { GetCubeMesh } from "./data/meshes/cube.js";
 export class Renderer {
@@ -31,13 +31,6 @@ export class Renderer {
             throw new Error("oh no! uncaptured event!!");
         });
         this.configureCanvas();
-        /*
-        this.modelUniformBuffer = this.device.createBuffer({
-            label: "ModelUniformBuffer-Renderer",
-            size: 4 * 16 * 2,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
-        */
         this.modelBindGroup = new BindGroup(this, "ModelBindGroup");
         this.modelBindGroup.bindGroupEntries = [
             {
@@ -49,196 +42,11 @@ export class Renderer {
                 }
             }
         ];
-        /*const cubeMesh: Mesh = new Mesh();
-        cubeMesh.positions = [
-            //FRONT
-            [0, 0, 0],
-            [0, 1, 0],
-            [1, 0, 0],
-
-            [1, 0, 0],
-            [0, 1, 0],
-            [1, 1, 0],
-
-            //LEFT
-            [1, 0, 0],
-            [1, 1, 0],
-            [1, 0, 1],
-
-            [1, 0, 1],
-            [1, 1, 0],
-            [1, 1, 1],
-
-            //TOP
-            [0, 1, 0],
-            [0, 1, 1],
-            [1, 1, 0],
-
-            [1, 1, 0],
-            [0, 1, 1],
-            [1, 1, 1],
-
-            //BACK
-            [0, 0, 1],
-            [1, 0, 1],
-            [0, 1, 1],
-
-            [1, 0, 1],
-            [1, 1, 1],
-            [0, 1, 1],
-
-            //RIGHT
-            [0, 0, 0],
-            [0, 0, 1],
-            [0, 1, 0],
-
-            [0, 0, 1],
-            [0, 1, 1],
-            [0, 1, 0],
-
-            //TOP
-            [0, 0, 0],
-            [1, 0, 0],
-            [0, 0, 1],
-
-            [1, 0, 0],
-            [1, 0, 1],
-            [0, 0, 1],
-        ];
-        cubeMesh.normals = [
-            //FRONT
-            [0, 0, -1],
-            [0, 0, -1],
-            [0, 0, -1],
-
-            [0, 0, -1],
-            [0, 0, -1],
-            [0, 0, -1],
-
-            //LEFT
-            [1, 0, 0],
-            [1, 0, 0],
-            [1, 0, 0],
-
-            [1, 0, 0],
-            [1, 0, 0],
-            [1, 0, 0],
-
-            //TOP
-            [0, 1, 0],
-            [0, 1, 0],
-            [0, 1, 0],
-
-            [0, 1, 0],
-            [0, 1, 0],
-            [0, 1, 0],
-
-            //BACK
-            [0, 0, 1],
-            [0, 0, 1],
-            [0, 0, 1],
-
-            [0, 0, 1],
-            [0, 0, 1],
-            [0, 0, 1],
-
-            //RIGHT
-            [-1, 0, 0],
-            [-1, 0, 0],
-            [-1, 0, 0],
-
-            [-1, 0, 0],
-            [-1, 0, 0],
-            [-1, 0, 0],
-
-            //BOTTOM
-            [0, -1, 0],
-            [0, -1, 0],
-            [0, -1, 0],
-
-            [0, -1, 0],
-            [0, -1, 0],
-            [0, -1, 0],
-        ];
-        cubeMesh.uvs = [
-            //FRONT
-            [0, 0],
-            [1, 0],
-            [0, 1],
-
-            [1, 0],
-            [1, 1],
-            [0, 1],
-
-            //LEFT
-            [0, 0],
-            [0, 1],
-            [1, 0],
-
-            [0, 1],
-            [1, 1],
-            [1, 0],
-
-            //TOP
-            [0, 0],
-            [1, 0],
-            [0, 1],
-
-            [1, 0],
-            [1, 1],
-            [0, 1],
-
-            //BACK
-            [0, 0],
-            [0, 1],
-            [1, 0],
-
-            [1, 0],
-            [0, 1],
-            [1, 1],
-
-            //RIGHT
-            [0, 0],
-            [1, 0],
-            [0, 1],
-
-            [0, 1],
-            [1, 0],
-            [1, 1],
-
-            //TOP
-            [0, 0],
-            [0, 1],
-            [1, 0],
-
-            [1, 0],
-            [0, 1],
-            [1, 1],
-        ];
-        cubeMesh.triangles = [
-            [0,1,2],
-            [3,4,5],
-            
-            [6,7,8],
-            [9,10,11],
-
-            [12,13,14],
-            [15,16,17],
-
-            [18,19,20],
-            [21,22,23],
-
-            [24,25,26],
-            [27,28,29],
-
-            [30,31,32],
-            [33,34,35],
-        ];*/
         for (let x = 0; x < 3; x++) {
             for (let y = 0; y < 3; y++) {
                 for (let z = 0; z < 3; z++) {
-                    const cubeModel = new Model(this, GetCubeMesh(), "cube");
-                    cubeModel.gBufferMat = Material.get(CubeGBufferMaterial, this);
+                    const cubeModel = new Mesh(this, GetCubeMesh(), "cube");
+                    cubeModel.gBufferMat = CubeGBufferMaterial.getDefault(this);
                     cubeModel.getIndexBuffer();
                     cubeModel.getVertexBuffer();
                     cubeModel.position = new Vector3(x * 2, y * 2, z * 2);

@@ -4,8 +4,8 @@
 
 //directional light function
 fn calculateDirLight(normal: vec3f) -> vec3f {
-    var directionalLight : f32 = (dot(normal, normalize(vec3f(1,4,2))) + 0.5) / 2.0;
-    var dirLight : vec3f = (vec3f(1,1,1) * max(directionalLight, 0.0));
+    var directionalLight : f32 = (dot(normal, normalize(vec3f(0.0487,0.982,-0.182))) + 0.5) / 2.0;
+    var dirLight : vec3f = (vec3f(1.0,1.0,1.0) * max(directionalLight, 0.0));
     return dirLight;
 }
 

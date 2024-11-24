@@ -1,6 +1,6 @@
 import { Camera } from "../../core/camera.js";
 import { BindGroup } from "../../core/material.js";
-import { Vector3 } from "../../core/model.js";
+import { Vector3 } from "../../core/mesh.js";
 import { RenderGraph } from "../../core/renderGraph.js";
 import { BasicLightingRenderPass } from "../renderPasses/basicLighting-renderPass.js";
 import { ForwardRenderPass } from "../renderPasses/forward-renderPass.js";

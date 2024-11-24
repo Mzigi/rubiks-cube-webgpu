@@ -1,5 +1,5 @@
 import { BindGroup, Material } from "../../core/material.js";
-import { UsedVertexAttributes } from "../../core/mesh.js";
+import { UsedVertexAttributes } from "../../core/meshData.js";
 import { Texture } from "../../core/texture.js";
 import { CubemapFSShader, CubemapVSShader } from "../../shaders/class/cubemap-shader.js";
 export class CubemapMaterial extends Material {
