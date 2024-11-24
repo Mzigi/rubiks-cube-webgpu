@@ -1,6 +1,8 @@
 import { Game } from "../game.js";
-import { Model } from "../rendering/core/model.js";
+import { MaterialView } from "../rendering/core/material.js";
+import { Model, Vector3 } from "../rendering/core/model.js";
 import { GetCubeMesh } from "../rendering/data/meshes/cube.js";
+import { CubeGBufferMaterial } from "../rendering/derived/materials/cubeGBuffer-material.js";
 import { CubemapMaterial } from "../rendering/derived/materials/cubemap-material.js";
 export class Rubiks extends Game {
     renderer;
@@ -53,8 +55,25 @@ export class Rubiks extends Game {
             }
             //console.log(e.code);
         });
+        this.doStuff();
+    }
+    doStuff() {
+        for (let x = 0; x < 3; x++) {
+            for (let y = 0; y < 3; y++) {
+                for (let z = 0; z < 3; z++) {
+                    const cubeModel = new Model(this.renderer, GetCubeMesh(), "cube");
+                    cubeModel.gBufferMat = new MaterialView(CubeGBufferMaterial.get(this.renderer));
+                    cubeModel.getIndexBuffer();
+                    cubeModel.getVertexBuffer();
+                    cubeModel.position = new Vector3(x * 2, y * 2, z * 2);
+                    cubeModel.size = new Vector3(2 / 3, 2 / 3, 2 / 3);
+                    console.log(cubeModel.position);
+                    this.renderer.addModel(cubeModel);
+                }
+            }
+        }
         const cubemapModel = new Model(this.renderer, GetCubeMesh(), "cubemap");
-        cubemapModel.forwardMat = CubemapMaterial.getDefault(this.renderer);
+        cubemapModel.forwardMat = new MaterialView(CubemapMaterial.get(this.renderer));
         cubemapModel.getIndexBuffer();
         cubemapModel.getVertexBuffer();
         this.renderer.addModel(cubemapModel);

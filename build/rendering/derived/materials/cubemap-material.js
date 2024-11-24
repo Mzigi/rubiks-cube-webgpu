@@ -3,38 +3,59 @@ import { UsedVertexAttributes } from "../../core/mesh.js";
 import { Texture } from "../../core/texture.js";
 import { CubemapFSShader, CubemapVSShader } from "../../shaders/class/cubemap-shader.js";
 export class CubemapMaterial extends Material {
-    vertexAttributes = [
-        {
-            // position
-            shaderLocation: 0,
-            offset: 0,
-            format: 'float32x3',
-        },
-        {
-            // normals
-            shaderLocation: 1,
-            offset: 4 * 3,
-            format: 'float32x3',
-        },
-        {
-            // uv
-            shaderLocation: 2,
-            offset: 4 * 3 * 2,
-            format: 'float32x2',
-        },
-    ];
-    vertexAttributesStride = 4 * 3 * 2 + 4 * 2;
-    usedVertexAttributes = new UsedVertexAttributes();
     cubemapTexture;
-    constructor(renderer, label) {
-        super(renderer, label);
-        this.asyncConstructor();
-    }
-    async asyncConstructor() {
-        if (!this.renderer.device)
-            throw new Error("Renderer is missing Device");
+    beforeInit() {
+        this.label = "cubemap";
+        this.vertexAttributes = [
+            {
+                // position
+                shaderLocation: 0,
+                offset: 0,
+                format: 'float32x3',
+            },
+            {
+                // normals
+                shaderLocation: 1,
+                offset: 4 * 3,
+                format: 'float32x3',
+            },
+            {
+                // uv
+                shaderLocation: 2,
+                offset: 4 * 3 * 2,
+                format: 'float32x2',
+            },
+        ];
+        this.vertexAttributesStride = 4 * 3 * 2 + 4 * 2;
+        this.usedVertexAttributes = new UsedVertexAttributes();
         this.vsShader = new CubemapVSShader(this.renderer, this.label);
         this.fsShader = new CubemapFSShader(this.renderer, this.label);
+        this.primitiveCullMode = "front";
+        this.usedVertexAttributes.usesPositions = true;
+        this.usedVertexAttributes.usesNormals = true;
+        this.usedVertexAttributes.usesUvs = true;
+        this.bindGroupLayout = new BindGroupLayout(this.renderer, this.label);
+        this.bindGroupLayout.bindGroupLayoutEntries = [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: {
+                    type: "filtering",
+                }
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: {
+                    viewDimension: "cube"
+                }
+            }
+        ];
+    }
+    afterInit() {
+        this.asyncAfterInit();
+    }
+    async asyncAfterInit() {
         const imgSrcs = [
             './assets/textures/cubemaps/ocean/right.jpg',
             './assets/textures/cubemaps/ocean/left.jpg',
@@ -57,43 +78,21 @@ export class CubemapMaterial extends Material {
                 origin: [0, 0, i]
             }, [imageBitmaps[i].width, imageBitmaps[i].height]);
         }
-        this.bindGroupLayout = new BindGroupLayout(this.renderer, this.label);
-        this.bindGroupLayout.bindGroupLayoutEntries = [
+        if (!this.renderer.device)
+            throw new Error("Device is missing from Renderer");
+        const defaultBindGroup = new BindGroup(this.renderer, this.label);
+        defaultBindGroup.bindGroupLayout = this.bindGroupLayout;
+        defaultBindGroup.bindGroupEntries = [
             {
                 binding: 0,
-                visibility: GPUShaderStage.FRAGMENT,
-                sampler: {
-                    type: "filtering",
-                }
-            },
-            {
-                binding: 1,
-                visibility: GPUShaderStage.FRAGMENT,
-                texture: {
-                    viewDimension: "cube"
-                }
-            }
-        ];
-        this.bindGroup = new BindGroup(this.renderer, this.label);
-        this.bindGroup.bindGroupLayout = this.bindGroupLayout;
-        this.bindGroup.bindGroupEntries = [
-            {
-                binding: 0,
-                resource: this.renderer.device.createSampler({
-                    magFilter: "linear",
-                    minFilter: "linear",
-                }),
+                resource: this.renderer.device.createSampler(),
             },
             {
                 binding: 1,
                 resource: this.cubemapTexture.createView({ dimension: "cube" }),
             }
         ];
-        this.primitiveCullMode = "front";
-        this.usedVertexAttributes.usesPositions = true;
-        this.usedVertexAttributes.usesNormals = true;
-        this.usedVertexAttributes.usesUvs = true;
-        this.init();
+        this.defaultBindGroup = defaultBindGroup;
     }
     getTargetInfos() {
         if (!this.renderer.presentationFormat)
@@ -103,9 +102,6 @@ export class CubemapMaterial extends Material {
                 format: this.renderer.presentationFormat,
             }
         ];
-    }
-    static getId() {
-        return "cubemap";
     }
 }
 //# sourceMappingURL=cubemap-material.js.map

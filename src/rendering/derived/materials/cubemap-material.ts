@@ -1,47 +1,70 @@
 import { BindGroup, BindGroupLayout, Material } from "../../core/material.js";
 import { UsedVertexAttributes } from "../../core/mesh.js";
 import { Texture } from "../../core/texture.js";
-import { Renderer } from "../../renderer.js";
 import { CubemapFSShader, CubemapVSShader } from "../../shaders/class/cubemap-shader.js";
 
 export class CubemapMaterial extends Material {
-    vertexAttributes: GPUVertexAttribute[] = [
-          {
-            // position
-            shaderLocation: 0,
-            offset: 0,
-            format: 'float32x3',
-          },
-          {
-            // normals
-            shaderLocation: 1,
-            offset: 4 * 3,
-            format: 'float32x3',
-          },
-          {
-            // uv
-            shaderLocation: 2,
-            offset: 4 * 3 * 2,
-            format: 'float32x2',
-          },
-    ];
-    vertexAttributesStride: number = 4 * 3 * 2 + 4 * 2;
-    usedVertexAttributes: UsedVertexAttributes = new UsedVertexAttributes();
-
     cubemapTexture!: Texture;
 
-    constructor(renderer: Renderer, label: string) {
-        super(renderer, label);
+    beforeInit(): void {
+        this.label = "cubemap";
 
-        this.asyncConstructor();
-    }
-
-    async asyncConstructor(): Promise<void> {
-        if (!this.renderer.device) throw new Error("Renderer is missing Device");
+        this.vertexAttributes = [
+              {
+                // position
+                shaderLocation: 0,
+                offset: 0,
+                format: 'float32x3',
+              },
+              {
+                // normals
+                shaderLocation: 1,
+                offset: 4 * 3,
+                format: 'float32x3',
+              },
+              {
+                // uv
+                shaderLocation: 2,
+                offset: 4 * 3 * 2,
+                format: 'float32x2',
+              },
+        ];
+        this.vertexAttributesStride = 4 * 3 * 2 + 4 * 2;
+        this.usedVertexAttributes = new UsedVertexAttributes();
 
         this.vsShader = new CubemapVSShader(this.renderer, this.label);
         this.fsShader = new CubemapFSShader(this.renderer, this.label);
 
+        this.primitiveCullMode = "front";
+
+        this.usedVertexAttributes.usesPositions = true;
+        this.usedVertexAttributes.usesNormals = true;
+        this.usedVertexAttributes.usesUvs = true;
+
+        this.bindGroupLayout = new BindGroupLayout(this.renderer, this.label);
+        this.bindGroupLayout.bindGroupLayoutEntries = [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                sampler: {
+                    type: "filtering",
+                }
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                texture: {
+                    viewDimension: "cube"
+                }
+            }
+        ];
+    }
+
+    afterInit(): void {
+        this.asyncAfterInit();
+    }
+
+    async asyncAfterInit(): Promise<void> {
         const imgSrcs: string[] = [
             './assets/textures/cubemaps/ocean/right.jpg',
             './assets/textures/cubemaps/ocean/left.jpg',
@@ -76,48 +99,22 @@ export class CubemapMaterial extends Material {
             );
         }
 
-        this.bindGroupLayout = new BindGroupLayout(this.renderer, this.label);
-        this.bindGroupLayout.bindGroupLayoutEntries = [
+        if (!this.renderer.device) throw new Error("Device is missing from Renderer");
+
+        const defaultBindGroup: BindGroup = new BindGroup(this.renderer, this.label);
+        defaultBindGroup.bindGroupLayout = this.bindGroupLayout;
+        defaultBindGroup.bindGroupEntries = [
             {
                 binding: 0,
-                visibility: GPUShaderStage.FRAGMENT,
-                sampler: {
-                    type: "filtering",
-                }
+                resource: this.renderer.device.createSampler(),
             },
             {
                 binding: 1,
-                visibility: GPUShaderStage.FRAGMENT,
-                texture: {
-                    viewDimension: "cube"
-                }
+                resource: this.cubemapTexture.createView({ dimension: "cube" }),
             }
         ];
 
-        this.bindGroup = new BindGroup(this.renderer, this.label);
-        this.bindGroup.bindGroupLayout = this.bindGroupLayout;
-
-        this.bindGroup.bindGroupEntries = [
-            {
-                binding: 0,
-                resource: this.renderer.device.createSampler({
-                    magFilter: "linear",
-                    minFilter: "linear",
-                }),
-            },
-            {
-                binding: 1,
-                resource: this.cubemapTexture.createView({dimension: "cube"}),
-            }
-        ];
-
-        this.primitiveCullMode = "front";
-
-        this.usedVertexAttributes.usesPositions = true;
-        this.usedVertexAttributes.usesNormals = true;
-        this.usedVertexAttributes.usesUvs = true;
-
-        this.init();
+        this.defaultBindGroup = defaultBindGroup;
     }
 
     getTargetInfos(): GPUColorTargetState[] {
@@ -128,9 +125,5 @@ export class CubemapMaterial extends Material {
                 format: this.renderer.presentationFormat,
             }
         ];
-    }
-
-    static getId(): string {
-        return "cubemap";
     }
 }

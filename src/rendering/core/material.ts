@@ -240,50 +240,75 @@ export class BindGroup extends GPUObject {
     }
 }*/
 
-
 export class Material {
     renderer: Renderer;
-    label: string;
+    label: string = "Material";
 
-    bindGroup!: BindGroup; //VIRTUAL
+    defaultBindGroup: BindGroup | undefined; //VIRTUAL (not required)
     bindGroupLayout!: BindGroupLayout; //VIRTUAL
     
-    vertexAttributes: GPUVertexAttribute[] = []; //VIRTUAL
-    vertexAttributesStride: number = 0; //VIRTUAL
+    vertexAttributes!: GPUVertexAttribute[]; //VIRTUAL
+    vertexAttributesStride!: number; //VIRTUAL
     usedVertexAttributes!: UsedVertexAttributes; //VIRTUAL
 
     private pipeline: GPURenderPipeline | undefined;
     private pipelineLayout: GPUPipelineLayout | undefined;
 
-    vsShader!: Shader;
-    fsShader: Shader | undefined;
+    vsShader!: Shader; //VIRTUAL
+    fsShader: Shader | undefined; //VIRTUAL (not required)
 
     created: boolean = false;
 
     primitiveCullMode: GPUCullMode = "back";
 
-    static instance: Material;
+    private static instance: Material;
 
-    constructor(renderer: Renderer, label: string) {
+    constructor(renderer: Renderer) {
+        if (this.static.instance) {
+            throw new Error(`Material (${this.getId()}) already exists`);
+        }
+
         this.renderer = renderer;
-        this.label = "Material-" + label;
+
+        this.beforeInit();
+        this.init();
+        this.afterInit();
+
+        this.static.instance = this;
+        renderer.addMaterial(this.getId(), this);
     }
 
-    init(): void {
-        if (this.vertexAttributes.length === 0 || this.vertexAttributesStride === 0 || !this.vsShader || !this.bindGroup || !this.usedVertexAttributes) {
+    get static(): typeof Material {
+        return (<typeof Material><unknown>this.constructor);
+    }
+
+    beforeInit(): void {} //making sure all virtual properties are set
+
+    init(): void { //validating virtual properties
+        if (!this.bindGroupLayout || !this.vertexAttributes || !this.vertexAttributesStride || !this.usedVertexAttributes || !this.vsShader || this.label === "Material") {
             console.log(this);
-            throw new Error("Material is missing required data");
         }
+        if (!this.bindGroupLayout) throw new Error("Material is missing bindGroupLayout");
+        if (!this.vertexAttributes) throw new Error("Material is missing vertexAttributes");
+        if (!this.vertexAttributesStride) throw new Error("Material is missing vertexAttributesStride");
+        if (!this.usedVertexAttributes) throw new Error("Material is missing usedVertexAttributes");
+        if (!this.vsShader) throw new Error("Material is missing vsShader");
+        if (this.label === "Material") throw new Error("Material is missing label");
+
+        //check if virtual functions are set up
+        this.getTargetInfos();
 
         this.created = true;
     }
 
-    setBindGroups(renderPass: RenderPass): void {
+    afterInit(): void {} //setting default bind group
+
+    /*setBindGroups(renderPass: RenderPass): void {
         if (!this.created) throw new Error("Material hasn't been initialized");
         if (!renderPass.passEncoder) throw new Error("PassEncoder is missing from RenderPass");
 
         renderPass.passEncoder.setBindGroup(3, this.bindGroup.getBindGroup());
-    }
+    }*/
 
     getVertexBufferLayout(): GPUVertexBufferLayout {
         if (!this.created) throw new Error("Material hasn't been initialized");
@@ -355,16 +380,42 @@ export class Material {
         return this.pipeline;
     }
 
-    static getId(): string {
-        throw new Error("Virtual method called");
+    getId(): string {
+        return this.label;
     }
 
-    static getDefault(renderer: Renderer): Material { //used for materials without any constructors
+    static get(renderer: Renderer): Material {
         if (!this.instance) {
-            this.instance = new this(renderer, this.getId());
-            renderer.addMaterial(this.getId(), this.instance);
+            new this(renderer);
         }
 
         return this.instance;
+    }
+}
+
+export class MaterialView {
+    material: Material;
+    bindGroup?: BindGroup;
+
+    constructor(material: Material, bindGroup?: BindGroup) {
+        this.material = material;
+        this.bindGroup = bindGroup;
+    }
+
+    getBindGroupToUse(): BindGroup | undefined {
+        return this.bindGroup || this.material.defaultBindGroup;
+    }
+
+    isReady(): boolean {
+        return !!this.getBindGroupToUse() && this.material.created;
+    }
+
+    setBindGroups(renderPass: RenderPass): void {
+        const bindGroupToUse: BindGroup | undefined = this.getBindGroupToUse();
+
+        if (!bindGroupToUse) throw new Error("MaterialView has no valid BindGroup, MaterialView.isReady() should be checked before calling setBindGroups(RenderPass)");
+        if (!renderPass.passEncoder) throw new Error("PassEncoder is missing from RenderPass");
+
+        renderPass.passEncoder.setBindGroup(3, bindGroupToUse.getBindGroup());
     }
 }

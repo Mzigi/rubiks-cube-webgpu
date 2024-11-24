@@ -11,6 +11,9 @@ export class RenderPass extends GPUObject {
         super(renderer, `RenderPass-${name}`);
         this.renderGraph = renderGraph;
     }
+    get static() {
+        return this.constructor;
+    }
     executeVirtualBefore() {
     }
     executeVirtual() {

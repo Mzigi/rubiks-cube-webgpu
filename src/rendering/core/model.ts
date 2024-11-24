@@ -1,9 +1,8 @@
 import { Renderer } from "../renderer.js";
-import { BindGroup, Material } from "./material.js";
+import { BindGroup, MaterialView } from "./material.js";
 import { Mesh } from "./mesh.js";
 import { RenderPass } from "./renderPass.js";
 import { mat4 } from "../../../node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js";
-import { GBufferRenderPass } from "../derived/renderPasses/gBuffer-renderPass.js";
 
 export type MaterialName = "gBufferMat" | "shadowMat" | "forwardMat"; 
 
@@ -55,9 +54,9 @@ struct Model {
 */
 
 export class Model {
-    gBufferMat: Material | undefined;
-    shadowMat: Material | undefined;
-    forwardMat: Material | undefined;
+    gBufferMat: MaterialView | undefined;
+    shadowMat: MaterialView | undefined;
+    forwardMat: MaterialView | undefined;
 
     renderer: Renderer;
 
@@ -131,20 +130,20 @@ export class Model {
         if (!renderPass.passEncoder) throw new Error("PassEncoder is missing from RenderPass");
         if (!this.renderer.renderGraph) throw new Error("currentRenderGraph is missing from RenderPass");
 
-        const material: Material | undefined = this[materialName];
+        const materialView: MaterialView | undefined = this[materialName];
 
-        if (material && material.created) {
-            if (!this.mesh.getUsedAttributes().matches(material.usedVertexAttributes)) {
-                throw new Error(`Mesh (${this.label}) does not have the vertex attributes that match the ones Material (${material.label}) needs`);
+        if (materialView && materialView.isReady()) {
+            if (!this.mesh.getUsedAttributes().matches(materialView.material.usedVertexAttributes)) {
+                throw new Error(`Mesh (${this.label}) does not have the vertex attributes that match the ones Material (${materialView.material.getId()}) needs`);
             }
 
             //configure passEncoder
-            renderPass.passEncoder.setPipeline(material.getPipeline());
+            renderPass.passEncoder.setPipeline(materialView.material.getPipeline());
 
             renderPass.passEncoder.setBindGroup(0, this.renderer.renderGraph.bindGroup.getBindGroup());
-            renderPass.passEncoder.setBindGroup(1, GBufferRenderPass.bindGroup.getBindGroup());
+            renderPass.passEncoder.setBindGroup(1, renderPass.static.bindGroup.getBindGroup());
             renderPass.passEncoder.setBindGroup(2, this.modelBindGroup.getBindGroup());
-            material.setBindGroups(renderPass);
+            materialView.setBindGroups(renderPass);
 
             renderPass.passEncoder.setVertexBuffer(0, this.getVertexBuffer());
             renderPass.passEncoder.setIndexBuffer(this.getIndexBuffer(), "uint16");

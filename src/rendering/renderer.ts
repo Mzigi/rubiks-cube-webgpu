@@ -1,10 +1,8 @@
-import { Model, Vector3 } from "./core/model.js";
+import { Model } from "./core/model.js";
 import { RenderGraph } from "./core/renderGraph.js";
 import { Texture } from "./core/texture.js";
 
 import { BindGroupLayout, Material } from "./core/material.js";
-import { CubeGBufferMaterial } from "./derived/materials/cubeGBuffer-material.js";
-import { GetCubeMesh } from "./data/meshes/cube.js";
 
 export class Renderer {
     canvas: HTMLCanvasElement;
@@ -58,22 +56,6 @@ export class Renderer {
                 }
             }
         ];
-
-        for (let x: number = 0; x < 3; x++) {
-            for (let y: number = 0; y < 3; y++) {
-                for (let z: number = 0; z < 3; z++) {
-                    const cubeModel: Model = new Model(this, GetCubeMesh(), "cube");
-                    cubeModel.gBufferMat = CubeGBufferMaterial.getDefault(this);
-                    cubeModel.getIndexBuffer();
-                    cubeModel.getVertexBuffer();
-                    cubeModel.position = new Vector3(x * 2,y * 2,z * 2);
-                    cubeModel.size = new Vector3(2 / 3, 2 / 3, 2 / 3);
-                    console.log(cubeModel.position);
-
-                    this.addModel(cubeModel);
-                }
-            }
-        }
     }
 
     configureCanvas(): void {
