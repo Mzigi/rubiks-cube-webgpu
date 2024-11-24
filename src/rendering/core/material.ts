@@ -1,7 +1,7 @@
 import { GBufferRenderPass } from "../derived/renderPasses/gBuffer-renderPass.js";
 import { Renderer } from "../renderer.js";
 import { GPUObject } from "./gpuObject.js";
-import { UsedVertexAttributes } from "./meshData.js";
+import { UsedVertexAttributes } from "./mesh.js";
 import { RenderPass } from "./renderPass.js";
 import { Shader } from "./shader.js";
 
@@ -33,8 +33,124 @@ group(3) { //material specific
 }
 */
 
+export interface BindGroupEntryBase {
+    binding: number;
+}
 
-export interface BindGroupEntry {
+export interface BindGroupEntry extends BindGroupEntryBase {
+    resource: GPUBindingResource | undefined;
+}
+
+export interface BindGroupLayoutEntry extends BindGroupEntryBase {
+    visibility: GPUShaderStageFlags,
+
+    buffer?: GPUBufferBindingLayout | undefined;
+    texture?: GPUTextureBindingLayout | undefined;
+    sampler?: GPUSamplerBindingLayout | undefined;
+}
+
+export class BindGroupLayout extends GPUObject {
+    bindGroupLayoutEntries: BindGroupLayoutEntry[] = []; //REQUIRED
+
+    private bindGroupLayout: GPUBindGroupLayout | undefined;
+
+    constructor(renderer: Renderer, label: string) {
+        super(renderer, "BindGroupLayout-" + label);
+    }
+
+    getBindGroupLayoutEntries(): GPUBindGroupLayoutEntry[] {
+        if (this.bindGroupLayoutEntries.length === 0) throw new Error("BindGroupLayout is empty");
+
+        const result: GPUBindGroupLayoutEntry[] = [];
+
+        for (const entry of this.bindGroupLayoutEntries) {
+            result.push({
+                binding: entry.binding,
+                visibility: entry.visibility,
+                buffer: entry.buffer,
+                texture: entry.texture,
+                sampler: entry.sampler,
+            });
+        }
+
+        return result;
+    }
+
+    getBindGroupLayout(): GPUBindGroupLayout {
+        if (this.bindGroupLayoutEntries.length === 0) throw new Error("BindGroup is empty");
+        if (!this.renderer.device) throw new Error("Renderer is missing Device");
+
+        if (!this.bindGroupLayout) {
+            const bindGroupLayoutDescriptor: GPUBindGroupLayoutDescriptor = {
+                label: "BindGroupLayout-" + this.label,
+                entries: this.getBindGroupLayoutEntries() as GPUBindGroupLayoutEntry[],
+            };
+
+            this.bindGroupLayout = this.renderer.device.createBindGroupLayout(bindGroupLayoutDescriptor);
+        }
+
+        return this.bindGroupLayout;
+    }
+
+    reset(): void {
+        this.bindGroupLayout = undefined;
+    }
+}
+
+export class BindGroup extends GPUObject {
+    bindGroupEntries: BindGroupEntry[] = []; //REQUIRED
+
+    private bindGroup: GPUBindGroup | undefined;
+    bindGroupLayout: BindGroupLayout | undefined;
+
+    constructor(renderer: Renderer, label: string) {
+        super(renderer, "BindGroup-" + label);
+    }
+
+    getBindGroupEntries(): GPUBindGroupEntry[] { //TODO: this should be 2 different functions
+        if (this.bindGroupEntries.length === 0) throw new Error("BindGroup is empty");
+
+        const result: GPUBindGroupEntry[] = [];
+
+        for (const entry of this.bindGroupEntries) {
+            if (entry.resource) {
+                result.push({
+                    binding: entry.binding,
+                    resource: entry.resource,
+                });
+            } else {
+                throw new Error("BindGroupEntry is missing resource");
+            }
+        }
+
+        return result;
+    }
+
+    getBindGroup(): GPUBindGroup {
+        if (this.bindGroupEntries.length === 0) throw new Error("BindGroup is empty");
+        if (!this.renderer.device) throw new Error("Renderer is missing Device");
+        if (!this.bindGroupLayout) throw new Error(`BindGroup (${this.label}) is missing BindGroupLayout`);
+
+        if (!this.bindGroup) {
+            const bindGroupDescriptor: GPUBindGroupDescriptor = {
+                label: "BindGroup-" + this.label,
+                layout: this.bindGroupLayout.getBindGroupLayout(),
+                entries: this.getBindGroupEntries() as GPUBindGroupEntry[],
+            };
+
+            this.bindGroup = this.renderer.device.createBindGroup(bindGroupDescriptor);
+        }
+
+        return this.bindGroup;
+    }
+
+    reset(): void {
+        //this.bindGroupLayout = undefined; //should this be done? probably not
+        this.bindGroup = undefined;
+    }
+}
+
+/*export interface BindGroupEntry {
     binding: number;
     resource: GPUBindingResource | undefined;
     visibility: GPUShaderStageFlags;
@@ -122,7 +238,7 @@ export class BindGroup extends GPUObject {
         this.bindGroupLayout = undefined;
         this.bindGroup = undefined;
     }
-}
+}*/
 
 
 export class Material {
@@ -130,6 +246,8 @@ export class Material {
     label: string;
 
     bindGroup!: BindGroup; //VIRTUAL
+    bindGroupLayout!: BindGroupLayout; //VIRTUAL
+    
     vertexAttributes: GPUVertexAttribute[] = []; //VIRTUAL
     vertexAttributesStride: number = 0; //VIRTUAL
     usedVertexAttributes!: UsedVertexAttributes; //VIRTUAL
@@ -184,7 +302,7 @@ export class Material {
         if (!this.pipelineLayout) {
             const pipelineLayoutDescriptor: GPUPipelineLayoutDescriptor = {
                 label: "PipelineLayout-" + this.label,
-                bindGroupLayouts: [this.renderer.renderGraph.bindGroup.getBindGroupLayout(), GBufferRenderPass.bindGroup.getBindGroupLayout(), this.renderer.modelBindGroup.getBindGroupLayout(), this.bindGroup.getBindGroupLayout()],
+                bindGroupLayouts: [this.renderer.renderGraph.bindGroupLayout.getBindGroupLayout(), GBufferRenderPass.bindGroupLayout.getBindGroupLayout(), this.renderer.modelBindGroupLayout.getBindGroupLayout(), this.bindGroupLayout.getBindGroupLayout()],
             };
 
             this.pipelineLayout = this.renderer.device.createPipelineLayout(pipelineLayoutDescriptor);

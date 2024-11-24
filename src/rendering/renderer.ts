@@ -1,8 +1,8 @@
-import { Mesh, Vector3 } from "./core/mesh.js";
+import { Model, Vector3 } from "./core/model.js";
 import { RenderGraph } from "./core/renderGraph.js";
 import { Texture } from "./core/texture.js";
 
-import { BindGroup, Material } from "./core/material.js";
+import { BindGroupLayout, Material } from "./core/material.js";
 import { CubeGBufferMaterial } from "./derived/materials/cubeGBuffer-material.js";
 import { GetCubeMesh } from "./data/meshes/cube.js";
 
@@ -18,12 +18,12 @@ export class Renderer {
     commandEncoder: GPUCommandEncoder | undefined;
 
     //modelUniformBuffer!: GPUBuffer;
-    modelBindGroup!: BindGroup;
+    modelBindGroupLayout!: BindGroupLayout;
 
     renderGraph: RenderGraph | undefined;
 
     private textures: Map<string, Texture> = new Map();
-    private models: Mesh[] = [];
+    private models: Model[] = [];
     private materials: Map<string, Material> = new Map();
 
     success: true | false | undefined = undefined;
@@ -48,12 +48,11 @@ export class Renderer {
 
         this.configureCanvas();
 
-        this.modelBindGroup = new BindGroup(this, "ModelBindGroup");
-        this.modelBindGroup.bindGroupEntries = [
+        this.modelBindGroupLayout = new BindGroupLayout(this, "ModelBindGroup");
+        this.modelBindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                resource: undefined,
                 buffer: {
                     type: "uniform",
                 }
@@ -63,7 +62,7 @@ export class Renderer {
         for (let x: number = 0; x < 3; x++) {
             for (let y: number = 0; y < 3; y++) {
                 for (let z: number = 0; z < 3; z++) {
-                    const cubeModel: Mesh = new Mesh(this, GetCubeMesh(), "cube");
+                    const cubeModel: Model = new Model(this, GetCubeMesh(), "cube");
                     cubeModel.gBufferMat = CubeGBufferMaterial.getDefault(this);
                     cubeModel.getIndexBuffer();
                     cubeModel.getVertexBuffer();
@@ -103,14 +102,14 @@ export class Renderer {
         }
     }
     
-    addModel(model: Mesh): number {
+    addModel(model: Model): number {
         model.id = this.models.length;
         this.models.push(model);
 
         return model.id;
     }
 
-    removeModel(model: Mesh): void {
+    removeModel(model: Model): void {
         if (model.id !== undefined) {
             this.models[model.id] = this.models[this.models.length - 1];
             this.models[model.id].id = model.id;
@@ -118,7 +117,7 @@ export class Renderer {
         }
     }
 
-    getModels(): Mesh[] {
+    getModels(): Model[] {
         return this.models;
     }
 

@@ -1,8 +1,8 @@
-import { MeshData } from "../../core/meshData.js";
+import { Mesh } from "../../core/mesh.js";
 
-const cubeMesh: MeshData = new MeshData();
+const cubeMesh: Mesh = new Mesh();
 
-export function GetCubeMesh(): MeshData {
+export function GetCubeMesh(): Mesh {
     if (cubeMesh.getIndexCount() === 0) {
         cubeMesh.positions = [
             //FRONT

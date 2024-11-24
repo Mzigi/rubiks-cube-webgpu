@@ -3,6 +3,7 @@ export class RenderGraph {
     camera;
     renderPasses = new Map();
     bindGroup; //VIRTUAL
+    bindGroupLayout; //VIRTUAL
     uniformBuffer; //VIRTUAL
     constructor(renderer) {
         this.renderer = renderer;

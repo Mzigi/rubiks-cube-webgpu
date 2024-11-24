@@ -1,4 +1,4 @@
-import { BindGroup } from "../../core/material.js";
+import { BindGroup, BindGroupLayout } from "../../core/material.js";
 import { RenderPass } from "../../core/renderPass.js";
 import { Texture } from "../../core/texture.js";
 export class GBufferRenderPass extends RenderPass {
@@ -6,6 +6,7 @@ export class GBufferRenderPass extends RenderPass {
     gBufferTextureAlbedo;
     depthTexture;
     gBufferTextureViews = [];
+    static texturesBindGroupLayout;
     static texturesBindGroup;
     constructor(renderer, renderGraph, name) {
         super(renderer, renderGraph, name);
@@ -15,24 +16,33 @@ export class GBufferRenderPass extends RenderPass {
         this.gBufferTexture2DFloat16 = new Texture(renderer, "GBufferRenderPass-gBufferTexture2DFloat16", [1, 1, 1], GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING, "rgba16float", true);
         this.gBufferTextureAlbedo = new Texture(renderer, "GBufferRenderPass-gBufferTextureAlbedo", [1, 1, 1], GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING, "rgba8unorm", true);
         this.depthTexture = new Texture(renderer, "GBufferRenderPass-depthTexture", [1, 1, 1], GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING, "depth24plus", true);
+        GBufferRenderPass.texturesBindGroupLayout = new BindGroupLayout(this.renderer, "Texture-GBufferRenderPass");
         GBufferRenderPass.texturesBindGroup = new BindGroup(this.renderer, "Textures-GBufferRenderPass");
+        GBufferRenderPass.texturesBindGroup.bindGroupLayout = GBufferRenderPass.texturesBindGroupLayout;
         this.setupTextures();
         //uniforms
         GBufferRenderPass.uniformBuffer = renderer.device.createBuffer({
             size: 1,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
-        GBufferRenderPass.bindGroup = new BindGroup(this.renderer, "GBufferRenderPass");
-        GBufferRenderPass.bindGroup.bindGroupEntries = [
+        GBufferRenderPass.bindGroupLayout = new BindGroupLayout(this.renderer, "GBufferRenderPass");
+        GBufferRenderPass.bindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                resource: {
-                    buffer: GBufferRenderPass.uniformBuffer,
-                },
                 buffer: {
                     type: "uniform",
                 }
+            }
+        ];
+        GBufferRenderPass.bindGroup = new BindGroup(this.renderer, "GBufferRenderPass");
+        GBufferRenderPass.bindGroup.bindGroupLayout = GBufferRenderPass.bindGroupLayout;
+        GBufferRenderPass.bindGroup.bindGroupEntries = [
+            {
+                binding: 0,
+                resource: {
+                    buffer: GBufferRenderPass.uniformBuffer,
+                },
             }
         ];
     }
@@ -65,11 +75,10 @@ export class GBufferRenderPass extends RenderPass {
             depthLoadOp: 'clear',
             depthStoreOp: 'store',
         };
-        GBufferRenderPass.texturesBindGroup.bindGroupEntries = [
+        GBufferRenderPass.texturesBindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.FRAGMENT,
-                resource: this.gBufferTextureViews[0],
                 texture: {
                     sampleType: "unfilterable-float",
                 },
@@ -77,7 +86,6 @@ export class GBufferRenderPass extends RenderPass {
             {
                 binding: 1,
                 visibility: GPUShaderStage.FRAGMENT,
-                resource: this.gBufferTextureViews[1],
                 texture: {
                     sampleType: "unfilterable-float",
                 },
@@ -85,10 +93,23 @@ export class GBufferRenderPass extends RenderPass {
             {
                 binding: 2,
                 visibility: GPUShaderStage.FRAGMENT,
-                resource: this.gBufferTextureViews[2],
                 texture: {
                     sampleType: "depth",
                 },
+            },
+        ];
+        GBufferRenderPass.texturesBindGroup.bindGroupEntries = [
+            {
+                binding: 0,
+                resource: this.gBufferTextureViews[0],
+            },
+            {
+                binding: 1,
+                resource: this.gBufferTextureViews[1],
+            },
+            {
+                binding: 2,
+                resource: this.gBufferTextureViews[2],
             },
         ];
         GBufferRenderPass.texturesBindGroup.reset();

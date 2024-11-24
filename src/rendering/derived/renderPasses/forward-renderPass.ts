@@ -1,4 +1,4 @@
-import { BindGroup } from "../../core/material.js";
+import { BindGroup, BindGroupLayout } from "../../core/material.js";
 import { RenderGraph } from "../../core/renderGraph.js";
 import { RenderPass } from "../../core/renderPass.js";
 import { Texture } from "../../core/texture.js";
@@ -10,8 +10,6 @@ export class ForwardRenderPass extends RenderPass {
 
     targetTexture: GPUTexture;
     depthTexture: Texture;
-
-    static texturesBindGroup: BindGroup;
 
     constructor(renderer: Renderer, renderGraph: RenderGraph, name: string, gBufferPass: GBufferRenderPass, targetTexture: GPUTexture) {
         super(renderer, renderGraph, name);
@@ -48,7 +46,6 @@ export class ForwardRenderPass extends RenderPass {
         };
 
         // Forwar
-        ForwardRenderPass.texturesBindGroup = new BindGroup(this.renderer, "Textures-ForwardRenderPass");
 
         //uniforms
         ForwardRenderPass.uniformBuffer = renderer.device.createBuffer({
@@ -56,17 +53,25 @@ export class ForwardRenderPass extends RenderPass {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
 
-        ForwardRenderPass.bindGroup = new BindGroup(this.renderer, "ForwardRenderPass");
-        ForwardRenderPass.bindGroup.bindGroupEntries = [
+        ForwardRenderPass.bindGroupLayout = new BindGroupLayout(this.renderer, "ForwardRenderPass");
+        ForwardRenderPass.bindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                resource: {
-                    buffer: ForwardRenderPass.uniformBuffer,
-                },
                 buffer: {
                     type: "uniform",
                 }
+            }
+        ];
+
+        ForwardRenderPass.bindGroup = new BindGroup(this.renderer, "ForwardRenderPass");
+        ForwardRenderPass.bindGroup.bindGroupLayout = ForwardRenderPass.bindGroupLayout;
+        ForwardRenderPass.bindGroup.bindGroupEntries = [
+            {
+                binding: 0,
+                resource: {
+                    buffer: ForwardRenderPass.uniformBuffer,
+                },
             }
         ];
     }

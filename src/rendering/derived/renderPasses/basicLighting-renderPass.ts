@@ -1,4 +1,4 @@
-import { BindGroup } from "../../core/material.js";
+import { BindGroup, BindGroupLayout } from "../../core/material.js";
 import { RenderGraph } from "../../core/renderGraph.js";
 import { RenderPass } from "../../core/renderPass.js";
 import { Shader } from "../../core/shader.js";
@@ -41,17 +41,25 @@ export class BasicLightingRenderPass extends RenderPass {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
 
-        BasicLightingRenderPass.bindGroup = new BindGroup(this.renderer, "BasicLightingRenderPass");
-        BasicLightingRenderPass.bindGroup.bindGroupEntries = [
+        BasicLightingRenderPass.bindGroupLayout = new BindGroupLayout(this.renderer, "BasicLightingRenderPass");
+        BasicLightingRenderPass.bindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                resource: {
-                    buffer: BasicLightingRenderPass.uniformBuffer,
-                },
                 buffer: {
                     type: "uniform",
                 }
+            }
+        ];
+
+        BasicLightingRenderPass.bindGroup = new BindGroup(this.renderer, "BasicLightingRenderPass");
+        BasicLightingRenderPass.bindGroup.bindGroupLayout = BasicLightingRenderPass.bindGroupLayout;
+        BasicLightingRenderPass.bindGroup.bindGroupEntries = [
+            {
+                binding: 0,
+                resource: {
+                    buffer: BasicLightingRenderPass.uniformBuffer,
+                },
             }
         ];
 
@@ -62,7 +70,7 @@ export class BasicLightingRenderPass extends RenderPass {
             label: "RenderPipeline-" + this.label,
             layout: renderer.device.createPipelineLayout({
                 label: "RenderPipelineLayout-" + this.label,
-                bindGroupLayouts: [GBufferRenderPass.texturesBindGroup.getBindGroupLayout(), this.renderGraph.bindGroup.getBindGroupLayout()]
+                bindGroupLayouts: [GBufferRenderPass.texturesBindGroupLayout.getBindGroupLayout(), this.renderGraph.bindGroupLayout.getBindGroupLayout()]
             }),
             vertex: {
                 module: this.vsShader.getShaderModule(),

@@ -1,6 +1,6 @@
 import { Camera } from "../../core/camera.js";
-import { BindGroup } from "../../core/material.js";
-import { Vector3 } from "../../core/mesh.js";
+import { BindGroup, BindGroupLayout } from "../../core/material.js";
+import { Vector3 } from "../../core/model.js";
 import { RenderGraph } from "../../core/renderGraph.js";
 import { Renderer } from "../../renderer.js";
 import { BasicLightingRenderPass } from "../renderPasses/basicLighting-renderPass.js";
@@ -31,17 +31,26 @@ export class DefaultRenderGraph extends RenderGraph {
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
 
-        this.bindGroup = new BindGroup(this.renderer, "DefaultRenderGraph");
-        this.bindGroup.bindGroupEntries = [
+        this.bindGroupLayout = new BindGroupLayout(renderer, "DefaultRenderGraph");
+        this.bindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                resource: {
-                    buffer: this.uniformBuffer,
-                },
                 buffer: {
                     type: "uniform",
                 }
+            }
+        ];
+
+        this.bindGroup = new BindGroup(this.renderer, "DefaultRenderGraph");
+        this.bindGroup.bindGroupLayout = this.bindGroupLayout;
+        this.bindGroup.bindGroupEntries = [
+            {
+                binding: 0,
+                resource: {
+                    buffer: this.uniformBuffer,
+                },
+                
             }
         ];
 

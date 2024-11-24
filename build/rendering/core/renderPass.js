@@ -5,6 +5,7 @@ export class RenderPass extends GPUObject {
     colorAttachments = []; //VIRTUAL
     depthStencilAttachment = undefined; //VIRTUAL
     static bindGroup;
+    static bindGroupLayout;
     static uniformBuffer;
     constructor(renderer, renderGraph, name) {
         super(renderer, `RenderPass-${name}`);

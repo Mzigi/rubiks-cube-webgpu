@@ -1,6 +1,6 @@
 import { Renderer } from "../renderer.js";
 import { GPUObject } from "./gpuObject.js";
-import { BindGroup } from "./material.js";
+import { BindGroup, BindGroupLayout } from "./material.js";
 import { RenderGraph } from "./renderGraph.js";
 
 export class RenderPass extends GPUObject { //VIRTUAL CLASS
@@ -12,6 +12,7 @@ export class RenderPass extends GPUObject { //VIRTUAL CLASS
     depthStencilAttachment: GPURenderPassDepthStencilAttachment | undefined = undefined; //VIRTUAL
 
     static bindGroup: BindGroup;
+    static bindGroupLayout: BindGroupLayout;
     static uniformBuffer: GPUBuffer;
 
     constructor(renderer: Renderer, renderGraph: RenderGraph, name: string) {

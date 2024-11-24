@@ -1,5 +1,5 @@
 import { mat4 } from "../../../node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js";
-import { Vector3 } from "./mesh.js";
+import { Vector3 } from "./model.js";
 
 export class Camera {
     position: Vector3;

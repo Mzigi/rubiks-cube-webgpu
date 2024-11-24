@@ -1,5 +1,5 @@
-import { BindGroup, Material } from "../../core/material.js";
-import { UsedVertexAttributes } from "../../core/meshData.js";
+import { BindGroup, BindGroupLayout, Material } from "../../core/material.js";
+import { UsedVertexAttributes } from "../../core/mesh.js";
 import { Texture } from "../../core/texture.js";
 import { Renderer } from "../../renderer.js";
 import { CubemapFSShader, CubemapVSShader } from "../../shaders/class/cubemap-shader.js";
@@ -76,16 +76,11 @@ export class CubemapMaterial extends Material {
             );
         }
 
-        this.bindGroup = new BindGroup(this.renderer, "BindGroup-" + this.label);
-
-        this.bindGroup.bindGroupEntries = [
+        this.bindGroupLayout = new BindGroupLayout(this.renderer, this.label);
+        this.bindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.FRAGMENT,
-                resource: this.renderer.device.createSampler({
-                    magFilter: "linear",
-                    minFilter: "linear",
-                }),
                 sampler: {
                     type: "filtering",
                 }
@@ -93,10 +88,26 @@ export class CubemapMaterial extends Material {
             {
                 binding: 1,
                 visibility: GPUShaderStage.FRAGMENT,
-                resource: this.cubemapTexture.createView({dimension: "cube"}),
                 texture: {
                     viewDimension: "cube"
                 }
+            }
+        ];
+
+        this.bindGroup = new BindGroup(this.renderer, this.label);
+        this.bindGroup.bindGroupLayout = this.bindGroupLayout;
+
+        this.bindGroup.bindGroupEntries = [
+            {
+                binding: 0,
+                resource: this.renderer.device.createSampler({
+                    magFilter: "linear",
+                    minFilter: "linear",
+                }),
+            },
+            {
+                binding: 1,
+                resource: this.cubemapTexture.createView({dimension: "cube"}),
             }
         ];
 

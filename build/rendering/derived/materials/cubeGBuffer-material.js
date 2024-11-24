@@ -1,5 +1,5 @@
-import { BindGroup, Material } from "../../core/material.js";
-import { UsedVertexAttributes } from "../../core/meshData.js";
+import { BindGroup, BindGroupLayout, Material } from "../../core/material.js";
+import { UsedVertexAttributes } from "../../core/mesh.js";
 import { Texture } from "../../core/texture.js";
 import { CubeGBufferFSShader, CubeGBufferVSShader } from "../../shaders/class/cubeGBuffer-shader.js";
 export class CubeGBufferMaterial extends Material {
@@ -47,17 +47,11 @@ export class CubeGBufferMaterial extends Material {
                 GPUTextureUsage.RENDER_ATTACHMENT, "rgba8unorm");
             cubeTexture.copyFromExternalImage(imageBitmap);
         }
-        this.bindGroup = new BindGroup(this.renderer, "BindGroup-" + this.label);
-        this.bindGroup.bindGroupEntries = [
+        this.bindGroupLayout = new BindGroupLayout(this.renderer, this.label);
+        this.bindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                resource: {
-                    buffer: this.renderer.device.createBuffer({
-                        size: 4 * 16,
-                        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-                    }),
-                },
                 buffer: {
                     type: "uniform",
                 }
@@ -65,7 +59,6 @@ export class CubeGBufferMaterial extends Material {
             {
                 binding: 1,
                 visibility: GPUShaderStage.FRAGMENT,
-                resource: this.renderer.device.createSampler(),
                 sampler: {
                     type: "filtering",
                 }
@@ -73,8 +66,28 @@ export class CubeGBufferMaterial extends Material {
             {
                 binding: 2,
                 visibility: GPUShaderStage.FRAGMENT,
-                resource: cubeTexture.createView(),
                 texture: {}
+            }
+        ];
+        this.bindGroup = new BindGroup(this.renderer, this.label);
+        this.bindGroup.bindGroupLayout = this.bindGroupLayout;
+        this.bindGroup.bindGroupEntries = [
+            {
+                binding: 0,
+                resource: {
+                    buffer: this.renderer.device.createBuffer({
+                        size: 4 * 16,
+                        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+                    }),
+                },
+            },
+            {
+                binding: 1,
+                resource: this.renderer.device.createSampler(),
+            },
+            {
+                binding: 2,
+                resource: cubeTexture.createView(),
             }
         ];
         this.usedVertexAttributes.usesPositions = true;

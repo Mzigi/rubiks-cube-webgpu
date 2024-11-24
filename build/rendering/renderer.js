@@ -1,5 +1,5 @@
-import { Mesh, Vector3 } from "./core/mesh.js";
-import { BindGroup } from "./core/material.js";
+import { Model, Vector3 } from "./core/model.js";
+import { BindGroupLayout } from "./core/material.js";
 import { CubeGBufferMaterial } from "./derived/materials/cubeGBuffer-material.js";
 import { GetCubeMesh } from "./data/meshes/cube.js";
 export class Renderer {
@@ -11,7 +11,7 @@ export class Renderer {
     device;
     commandEncoder;
     //modelUniformBuffer!: GPUBuffer;
-    modelBindGroup;
+    modelBindGroupLayout;
     renderGraph;
     textures = new Map();
     models = [];
@@ -31,12 +31,11 @@ export class Renderer {
             throw new Error("oh no! uncaptured event!!");
         });
         this.configureCanvas();
-        this.modelBindGroup = new BindGroup(this, "ModelBindGroup");
-        this.modelBindGroup.bindGroupEntries = [
+        this.modelBindGroupLayout = new BindGroupLayout(this, "ModelBindGroup");
+        this.modelBindGroupLayout.bindGroupLayoutEntries = [
             {
                 binding: 0,
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-                resource: undefined,
                 buffer: {
                     type: "uniform",
                 }
@@ -45,7 +44,7 @@ export class Renderer {
         for (let x = 0; x < 3; x++) {
             for (let y = 0; y < 3; y++) {
                 for (let z = 0; z < 3; z++) {
-                    const cubeModel = new Mesh(this, GetCubeMesh(), "cube");
+                    const cubeModel = new Model(this, GetCubeMesh(), "cube");
                     cubeModel.gBufferMat = CubeGBufferMaterial.getDefault(this);
                     cubeModel.getIndexBuffer();
                     cubeModel.getVertexBuffer();
