@@ -57,6 +57,7 @@ export class Model {
     id; //index in renderer's model array
     position = new Vector3(0, 0, 0);
     size = new Vector3(1, 1, 1);
+    rotation = new Vector3(0, 0, 0);
     constructor(renderer, mesh, label = "Unknown") {
         this.renderer = renderer;
         this.mesh = mesh;
@@ -65,11 +66,11 @@ export class Model {
         if (!this.renderer.device)
             throw new Error("Device is missing from Renderer");
         this.modelUniformBuffer = this.renderer.device.createBuffer({
-            label: "ModelUniformBuffer-Renderer",
+            label: "ModelUniformBuffer-" + this.label,
             size: 4 * 16 * 2,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
-        this.modelBindGroup = new BindGroup(this.renderer, "ModelBindGroup");
+        this.modelBindGroup = new BindGroup(this.renderer, this.label);
         this.modelBindGroup.bindGroupLayout = renderer.modelBindGroupLayout;
         this.modelBindGroup.bindGroupEntries = [
             {
@@ -89,6 +90,9 @@ export class Model {
         //model uniform
         const modelMatrix = mat4.translation([this.position.x, this.position.y, this.position.z]);
         mat4.scale(modelMatrix, [this.size.x, this.size.y, this.size.z], modelMatrix);
+        mat4.rotateY(modelMatrix, this.rotation.y / Math.PI * 180, modelMatrix);
+        mat4.rotateX(modelMatrix, this.rotation.x / Math.PI * 180, modelMatrix);
+        mat4.rotateZ(modelMatrix, this.rotation.z / Math.PI * 180, modelMatrix);
         this.renderer.device.queue.writeBuffer(this.modelUniformBuffer, 0, modelMatrix);
         const invertTransposeModelMatrix = mat4.invert(modelMatrix);
         mat4.transpose(invertTransposeModelMatrix, invertTransposeModelMatrix);

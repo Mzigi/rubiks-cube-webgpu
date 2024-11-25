@@ -70,30 +70,36 @@ export class CubeGBufferMaterial extends Material {
         this.asyncAfterInit();
     }
 
-    async asyncAfterInit(): Promise<void> {
+    async getBindGroupForTexture(textureURL: string): Promise<BindGroup> {
         if (!this.renderer.device) throw new Error("Device is missing from Renderer");
 
         let cubeTexture: Texture;
         {
-            const response: Response = await fetch('https://webgpu.github.io/webgpu-samples/assets/img/Di-3d.png');
+            const response: Response = await fetch(textureURL);
             
             const blob: Blob = await response.blob();
             
             const imageBitmap: ImageBitmap = await createImageBitmap(blob);
-            cubeTexture = new Texture(this.renderer,
-                "https://webgpu.github.io/webgpu-samples/assets/img/Di-3d.png",
-                [imageBitmap.width, imageBitmap.height, 1],
-                GPUTextureUsage.TEXTURE_BINDING |
-                GPUTextureUsage.COPY_DST |
-                GPUTextureUsage.RENDER_ATTACHMENT,
-                "rgba8unorm",
-            );
-            cubeTexture.copyFromExternalImage(imageBitmap);
+
+            const foundTexture: Texture | undefined = this.renderer.getTexture(textureURL);
+            if (foundTexture) {
+                cubeTexture = foundTexture;
+            } else {
+                cubeTexture = new Texture(this.renderer,
+                    textureURL,
+                    [imageBitmap.width, imageBitmap.height, 1],
+                    GPUTextureUsage.TEXTURE_BINDING |
+                    GPUTextureUsage.COPY_DST |
+                    GPUTextureUsage.RENDER_ATTACHMENT,
+                    "rgba8unorm",
+                );
+                cubeTexture.copyFromExternalImage(imageBitmap);
+            }
         }
 
-        const defaultBindGroup: BindGroup = new BindGroup(this.renderer, this.label);
-        defaultBindGroup.bindGroupLayout = this.bindGroupLayout;
-        defaultBindGroup.bindGroupEntries = [
+        const bindGroup: BindGroup = new BindGroup(this.renderer, textureURL + "-" + this.label);
+        bindGroup.bindGroupLayout = this.bindGroupLayout;
+        bindGroup.bindGroupEntries = [
             {
                 binding: 0,
                 resource: {
@@ -105,7 +111,7 @@ export class CubeGBufferMaterial extends Material {
             },
             {
                 binding: 1,
-                resource: this.renderer.device.createSampler(),
+                resource: this.renderer.device.createSampler( { minFilter: "linear", magFilter: "linear"} ),
             },
             {
                 binding: 2,
@@ -113,7 +119,11 @@ export class CubeGBufferMaterial extends Material {
             }
         ];
 
-        this.defaultBindGroup = defaultBindGroup;
+        return bindGroup;
+    }
+
+    async asyncAfterInit(): Promise<void> {
+        this.defaultBindGroup = await this.getBindGroupForTexture("https://webgpu.github.io/webgpu-samples/assets/img/Di-3d.png");
     }
 
     getTargetInfos(): GPUColorTargetState[] {

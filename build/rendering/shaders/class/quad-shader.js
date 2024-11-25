@@ -5,12 +5,13 @@ export class QuadFSShader extends Shader {
         this.code = `
 @group(0) @binding(0) var textureSampler: sampler;
 @group(0) @binding(1) var inputTexture: texture_2d<f32>;
+@group(0) @binding(2) var<uniform> screenResolution: vec2f;
 
 @fragment
 fn fragmentMain(
     @builtin(position) coord : vec4f
 ) -> @location(0) vec4f {
-    return textureSample(inputTexture, textureSampler, vec2(coord));
+    return textureSample(inputTexture, textureSampler, coord.xy / screenResolution.xy);
 }
         `;
         this.init();
@@ -35,4 +36,4 @@ fn vertexMain(
         this.init();
     }
 }
-//# sourceMappingURL=quad-vsShader.js.map
+//# sourceMappingURL=quad-shader.js.map

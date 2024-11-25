@@ -85,7 +85,7 @@ export class CubemapMaterial extends Material {
         defaultBindGroup.bindGroupEntries = [
             {
                 binding: 0,
-                resource: this.renderer.device.createSampler(),
+                resource: this.renderer.device.createSampler({ minFilter: "linear", magFilter: "linear" }),
             },
             {
                 binding: 1,
@@ -95,11 +95,9 @@ export class CubemapMaterial extends Material {
         this.defaultBindGroup = defaultBindGroup;
     }
     getTargetInfos() {
-        if (!this.renderer.presentationFormat)
-            throw new Error("presentationFormat is missing from Renderer");
         return [
             {
-                format: this.renderer.presentationFormat,
+                format: "rgba8unorm",
             }
         ];
     }

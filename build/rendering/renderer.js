@@ -86,7 +86,7 @@ export class Renderer {
         }
     }
     getTexture(textureName) {
-        return this.textures.get(textureName);
+        return this.textures.get("Texture-" + textureName);
     }
     addMaterial(materialId, material) {
         if (!this.materials.get(materialId)) {

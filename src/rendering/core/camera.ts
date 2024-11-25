@@ -46,6 +46,10 @@ export class Camera {
         return new Vector3(x,y,z);
     }
 
+    getViewProjectionMatrix(aspect: number): Float32Array {
+        return mat4.multiply(this.getProjectionMatrix(aspect), this.getViewMatrix());
+    }
+
     /*lookAt(target: Vector3): void {
         const cameraLookAtMatrix: Float32Array = mat4.aim([this.position.x, this.position.y, this.position.z], [target.x, target.y, target.z], [0,1,0]);
         const cameraTranslation: Float32Array = mat4.getTranslation(cameraLookAtMatrix);

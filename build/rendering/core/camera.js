@@ -35,5 +35,8 @@ export class Camera {
         const [x, y, z] = mat4.getTranslation(cameraRotation);
         return new Vector3(x, y, z);
     }
+    getViewProjectionMatrix(aspect) {
+        return mat4.multiply(this.getProjectionMatrix(aspect), this.getViewMatrix());
+    }
 }
 //# sourceMappingURL=camera.js.map

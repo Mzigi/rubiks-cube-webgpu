@@ -15,7 +15,7 @@ export class Shader extends GPUObject {
     constructor(renderer: Renderer, label: string, shaderType: ShaderType) {
         if (!renderer.device) throw new Error("Device does not exist on renderer");
 
-        super(renderer, "Shader-" + label);
+        super(renderer, shaderType + "Shader-" + label);
 
         this.shaderType = shaderType;
     }

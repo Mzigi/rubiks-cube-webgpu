@@ -3,15 +3,16 @@ import { RenderGraph } from "../../core/renderGraph.js";
 import { RenderPass } from "../../core/renderPass.js";
 import { Texture } from "../../core/texture.js";
 import { Renderer } from "../../renderer.js"; 
+import { DefaultRenderGraph } from "../renderGraphs/default-renderGraph.js";
 import { GBufferRenderPass } from "./gBuffer-renderPass.js";
 
 export class ForwardRenderPass extends RenderPass {
     gBufferPass: GBufferRenderPass;
 
-    targetTexture: GPUTexture;
+    targetTexture: Texture;
     depthTexture: Texture;
 
-    constructor(renderer: Renderer, renderGraph: RenderGraph, name: string, gBufferPass: GBufferRenderPass, targetTexture: GPUTexture) {
+    constructor(renderer: Renderer, renderGraph: RenderGraph, name: string, gBufferPass: GBufferRenderPass) {
         super(renderer, renderGraph, name);
 
         if (!renderer.device) throw new Error("Device is missing from Renderer");
@@ -26,10 +27,11 @@ export class ForwardRenderPass extends RenderPass {
             true,
         );
 
-        this.targetTexture = targetTexture;
+        this.targetTexture = (this.renderGraph as DefaultRenderGraph).basicLightingPass.targetTexture;
+        
         this.colorAttachments = [
             {
-                view: targetTexture.createView(), //this should be set later
+                view: this.targetTexture.createView(), //this should be set later
           
                 loadOp: 'load',
                 storeOp: 'store',
@@ -79,7 +81,14 @@ export class ForwardRenderPass extends RenderPass {
     executeVirtualBefore(): void {
         if (!this.gBufferPass.depthStencilAttachment) throw new Error("GBufferPass is missing depthStencilAttachment");
 
-        this.colorAttachments[0].view = this.targetTexture.createView();
+        this.colorAttachments = [
+            {
+                view: this.targetTexture.createView(), //this should be set later
+          
+                loadOp: 'load',
+                storeOp: 'store',
+            },
+        ];
         this.depthStencilAttachment = {
             view: this.gBufferPass.depthStencilAttachment.view,
         

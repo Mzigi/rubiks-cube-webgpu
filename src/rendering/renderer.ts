@@ -112,7 +112,7 @@ export class Renderer {
     }
 
     getTexture(textureName: string): Texture | undefined {
-        return this.textures.get(textureName);
+        return this.textures.get("Texture-" + textureName);
     }
 
     addMaterial(materialId: string, material: Material): void {

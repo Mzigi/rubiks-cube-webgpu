@@ -2,6 +2,7 @@
 struct Global {
     projectionMatrix: mat4x4f,
     viewMatrix: mat4x4f,
+    invViewProjectionMatrix: mat4x4f
 }
 
 struct Model {

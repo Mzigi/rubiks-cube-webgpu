@@ -67,7 +67,13 @@ export class Rubiks extends Game {
                     cubeModel.getVertexBuffer();
                     cubeModel.position = new Vector3(x * 2, y * 2, z * 2);
                     cubeModel.size = new Vector3(2 / 3, 2 / 3, 2 / 3);
-                    console.log(cubeModel.position);
+                    if (x === 2) {
+                        CubeGBufferMaterial.get(this.renderer).getBindGroupForTexture('./assets/textures/cubemaps/ocean/bottom.jpg').then((bindGroup) => {
+                            if (cubeModel.gBufferMat) {
+                                cubeModel.gBufferMat.bindGroup = bindGroup;
+                            }
+                        });
+                    }
                     this.renderer.addModel(cubeModel);
                 }
             }

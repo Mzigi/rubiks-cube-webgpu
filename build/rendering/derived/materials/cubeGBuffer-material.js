@@ -60,22 +60,28 @@ export class CubeGBufferMaterial extends Material {
             throw new Error("Renderer is missing Device");
         this.asyncAfterInit();
     }
-    async asyncAfterInit() {
+    async getBindGroupForTexture(textureURL) {
         if (!this.renderer.device)
             throw new Error("Device is missing from Renderer");
         let cubeTexture;
         {
-            const response = await fetch('https://webgpu.github.io/webgpu-samples/assets/img/Di-3d.png');
+            const response = await fetch(textureURL);
             const blob = await response.blob();
             const imageBitmap = await createImageBitmap(blob);
-            cubeTexture = new Texture(this.renderer, "https://webgpu.github.io/webgpu-samples/assets/img/Di-3d.png", [imageBitmap.width, imageBitmap.height, 1], GPUTextureUsage.TEXTURE_BINDING |
-                GPUTextureUsage.COPY_DST |
-                GPUTextureUsage.RENDER_ATTACHMENT, "rgba8unorm");
-            cubeTexture.copyFromExternalImage(imageBitmap);
+            const foundTexture = this.renderer.getTexture(textureURL);
+            if (foundTexture) {
+                cubeTexture = foundTexture;
+            }
+            else {
+                cubeTexture = new Texture(this.renderer, textureURL, [imageBitmap.width, imageBitmap.height, 1], GPUTextureUsage.TEXTURE_BINDING |
+                    GPUTextureUsage.COPY_DST |
+                    GPUTextureUsage.RENDER_ATTACHMENT, "rgba8unorm");
+                cubeTexture.copyFromExternalImage(imageBitmap);
+            }
         }
-        const defaultBindGroup = new BindGroup(this.renderer, this.label);
-        defaultBindGroup.bindGroupLayout = this.bindGroupLayout;
-        defaultBindGroup.bindGroupEntries = [
+        const bindGroup = new BindGroup(this.renderer, textureURL + "-" + this.label);
+        bindGroup.bindGroupLayout = this.bindGroupLayout;
+        bindGroup.bindGroupEntries = [
             {
                 binding: 0,
                 resource: {
@@ -87,14 +93,17 @@ export class CubeGBufferMaterial extends Material {
             },
             {
                 binding: 1,
-                resource: this.renderer.device.createSampler(),
+                resource: this.renderer.device.createSampler({ minFilter: "linear", magFilter: "linear" }),
             },
             {
                 binding: 2,
                 resource: cubeTexture.createView(),
             }
         ];
-        this.defaultBindGroup = defaultBindGroup;
+        return bindGroup;
+    }
+    async asyncAfterInit() {
+        this.defaultBindGroup = await this.getBindGroupForTexture("https://webgpu.github.io/webgpu-samples/assets/img/Di-3d.png");
     }
     getTargetInfos() {
         return [

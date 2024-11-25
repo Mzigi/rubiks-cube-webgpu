@@ -5,16 +5,16 @@ export class ForwardRenderPass extends RenderPass {
     gBufferPass;
     targetTexture;
     depthTexture;
-    constructor(renderer, renderGraph, name, gBufferPass, targetTexture) {
+    constructor(renderer, renderGraph, name, gBufferPass) {
         super(renderer, renderGraph, name);
         if (!renderer.device)
             throw new Error("Device is missing from Renderer");
         this.gBufferPass = gBufferPass;
         this.depthTexture = new Texture(renderer, "ForwardRenderPass-depthTexture", [1, 1, 1], GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING, "depth24plus", true);
-        this.targetTexture = targetTexture;
+        this.targetTexture = this.renderGraph.basicLightingPass.targetTexture;
         this.colorAttachments = [
             {
-                view: targetTexture.createView(), //this should be set later
+                view: this.targetTexture.createView(), //this should be set later
                 loadOp: 'load',
                 storeOp: 'store',
             },
@@ -56,7 +56,13 @@ export class ForwardRenderPass extends RenderPass {
     executeVirtualBefore() {
         if (!this.gBufferPass.depthStencilAttachment)
             throw new Error("GBufferPass is missing depthStencilAttachment");
-        this.colorAttachments[0].view = this.targetTexture.createView();
+        this.colorAttachments = [
+            {
+                view: this.targetTexture.createView(), //this should be set later
+                loadOp: 'load',
+                storeOp: 'store',
+            },
+        ];
         this.depthStencilAttachment = {
             view: this.gBufferPass.depthStencilAttachment.view,
             depthClearValue: 1.0,

@@ -1,7 +1,7 @@
 import { App } from "../app.js";
 import { Game } from "../game.js";
 import { Camera } from "../rendering/core/camera.js";
-import { MaterialView } from "../rendering/core/material.js";
+import { BindGroup, MaterialView } from "../rendering/core/material.js";
 import { Model, Vector3 } from "../rendering/core/model.js";
 import { RenderGraph } from "../rendering/core/renderGraph.js";
 import { GetCubeMesh } from "../rendering/data/meshes/cube.js";
@@ -82,7 +82,14 @@ export class Rubiks extends Game {
                     cubeModel.getVertexBuffer();
                     cubeModel.position = new Vector3(x * 2,y * 2,z * 2);
                     cubeModel.size = new Vector3(2 / 3, 2 / 3, 2 / 3);
-                    console.log(cubeModel.position);
+
+                    if (x === 2) {
+                        (CubeGBufferMaterial.get(this.renderer) as CubeGBufferMaterial).getBindGroupForTexture('./assets/textures/cubemaps/ocean/bottom.jpg').then((bindGroup: BindGroup) => {
+                            if (cubeModel.gBufferMat) {
+                                cubeModel.gBufferMat.bindGroup = bindGroup;
+                            }
+                        });
+                    }
 
                     this.renderer.addModel(cubeModel);
                 }

@@ -4,8 +4,10 @@ import { Vector3 } from "../../core/model.js";
 import { RenderGraph } from "../../core/renderGraph.js";
 import { Renderer } from "../../renderer.js";
 import { BasicLightingRenderPass } from "../renderPasses/basicLighting-renderPass.js";
+import { DisplayRenderPass } from "../renderPasses/display-renderPass.js";
 import { ForwardRenderPass } from "../renderPasses/forward-renderPass.js";
 import { GBufferRenderPass } from "../renderPasses/gBuffer-renderPass.js";
+import { mat4 } from "../../../../node_modules/wgpu-matrix/dist/3.x/wgpu-matrix.module.js";
 
 /*
 struct Global {
@@ -18,6 +20,8 @@ export class DefaultRenderGraph extends RenderGraph {
     basicLightingPass: BasicLightingRenderPass;
     forwardPass: ForwardRenderPass;
 
+    displayPass: DisplayRenderPass;
+
     camera: Camera;
 
     constructor(renderer: Renderer) {
@@ -27,7 +31,7 @@ export class DefaultRenderGraph extends RenderGraph {
         if (!this.renderer.context) throw new Error("Context is missing from Renderer");
 
         this.uniformBuffer = this.renderer.device.createBuffer({
-            size:  4 * 16 * 2,
+            size:  4 * 16 * 3,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
 
@@ -55,8 +59,10 @@ export class DefaultRenderGraph extends RenderGraph {
         ];
 
         this.gBufferPass = new GBufferRenderPass(renderer, this, "gBufferPass");
-        this.basicLightingPass = new BasicLightingRenderPass(renderer, this, "basicLightingPass", this.gBufferPass, this.renderer.context.getCurrentTexture());
-        this.forwardPass = new ForwardRenderPass(renderer, this, "forwardRenderPass", this.gBufferPass, this.renderer.context.getCurrentTexture());
+        this.basicLightingPass = new BasicLightingRenderPass(renderer, this, "basicLightingPass", this.gBufferPass);
+        this.forwardPass = new ForwardRenderPass(renderer, this, "forwardRenderPass", this.gBufferPass);
+
+        this.displayPass = new DisplayRenderPass(renderer, this, "displayPass", this.basicLightingPass.targetTexture);
 
         this.camera = new Camera(new Vector3(0.7, 0, 5.29));
     }
@@ -69,21 +75,22 @@ export class DefaultRenderGraph extends RenderGraph {
         //const viewMatrix: Float32Array = mat4.lookAt([1.5,1.5,1.5], [0,0,0], [0,1,0]);
         const viewMatrix: Float32Array = this.camera.getViewMatrix();
 
-        //const viewProjectionMatrix: Float32Array = mat4.multiply(projectionMatrix, viewMatrix);
+        const invViewProjectionMatrix: Float32Array = mat4.invert(this.camera.getViewProjectionMatrix(this.renderer.aspect));
 
         this.renderer.device.queue.writeBuffer(this.uniformBuffer, 0, projectionMatrix);
         this.renderer.device.queue.writeBuffer(this.uniformBuffer, 64, viewMatrix);
+        this.renderer.device.queue.writeBuffer(this.uniformBuffer, 64 * 2, invViewProjectionMatrix);
 
         for (const model of this.renderer.getModels()) {
             model.prepareRender();
         }
 
-        this.basicLightingPass.targetTexture = this.renderer.context.getCurrentTexture();
-        this.forwardPass.targetTexture = this.renderer.context.getCurrentTexture();
-
         this.gBufferPass.execute();
         this.basicLightingPass.execute();
         
         this.forwardPass.execute();
+
+        this.displayPass.inputTexture = this.forwardPass.targetTexture;
+        this.displayPass.execute();
     }
 }
