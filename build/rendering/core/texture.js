@@ -28,7 +28,7 @@ export class Texture extends GPUObject {
         if (this.matchCanvas) {
             this.size = [this.renderer.canvas.width, this.renderer.canvas.height, 1];
         }
-        console.log(`Creating texture (${this.label})`);
+        //console.log(`Creating texture (${this.label})`);
         this.gpuTexture = this.renderer.device.createTexture({
             size: this.size,
             usage: this.usage,

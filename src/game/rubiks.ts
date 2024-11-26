@@ -1,6 +1,7 @@
 import { App } from "../app.js";
 import { Game } from "../game.js";
 import { Camera } from "../rendering/core/camera.js";
+import { PointLight } from "../rendering/core/light.js";
 import { BindGroup, MaterialView } from "../rendering/core/material.js";
 import { Model, Vector3 } from "../rendering/core/model.js";
 import { RenderGraph } from "../rendering/core/renderGraph.js";
@@ -16,6 +17,8 @@ export class Rubiks extends Game {
     camera!: Camera;
 
     created: boolean = false;
+
+    pointLights: PointLight[] = [];
 
     constructor(app: App) {
         super(app);
@@ -96,17 +99,71 @@ export class Rubiks extends Game {
             }
         }
 
+        const cubeModel: Model = new Model(this.renderer, GetCubeMesh(), "cube");
+        cubeModel.gBufferMat = new MaterialView(CubeGBufferMaterial.get(this.renderer));
+        cubeModel.getIndexBuffer();
+        cubeModel.getVertexBuffer();
+        cubeModel.position = new Vector3(0,0,0);
+        cubeModel.size = new Vector3(0.1, 0.1, 0.1);
+        (CubeGBufferMaterial.get(this.renderer) as CubeGBufferMaterial).getBindGroupForTexture('./assets/textures/cubemaps/ocean/top.jpg').then((bindGroup: BindGroup) => {
+            if (cubeModel.gBufferMat) {
+                cubeModel.gBufferMat.bindGroup = bindGroup;
+            }
+        });
+
+        this.renderer.addModel(cubeModel);
+
         const cubemapModel: Model = new Model(this.renderer, GetCubeMesh(), "cubemap");
         cubemapModel.forwardMat = new MaterialView(CubemapMaterial.get(this.renderer));
         cubemapModel.getIndexBuffer();
         cubemapModel.getVertexBuffer();
-        
+
         this.renderer.addModel(cubemapModel);
+
+        (CubeGBufferMaterial.get(this.renderer) as CubeGBufferMaterial).getBindGroupForTexture('./assets/textures/cubemaps/ocean/left.jpg').then((bindGroup: BindGroup) => {
+            for (let i: number = 0; i < 64; i++) {
+                const pointLight: PointLight = new PointLight();
+                pointLight.position.x = Math.random() * 5;
+                pointLight.position.y = Math.random() * 5;
+                pointLight.position.z = Math.random() * 5;
+
+                pointLight.diffuseColor.r = Math.random() * 255;
+                pointLight.diffuseColor.g = Math.random() * 255;
+                pointLight.diffuseColor.b = Math.random() * 255;
+
+                pointLight.distance = Math.random() * 5 + 10;
+
+                pointLight.specularColor = pointLight.diffuseColor.clone();
+            
+                const cubeModel: Model = new Model(this.renderer, GetCubeMesh(), "cube");
+                cubeModel.gBufferMat = new MaterialView(CubeGBufferMaterial.get(this.renderer));
+                cubeModel.getIndexBuffer();
+                cubeModel.getVertexBuffer();
+                cubeModel.position = pointLight.position;
+                cubeModel.size = new Vector3(0.1, 0.1, 0.1);
+                
+                    if (cubeModel.gBufferMat) {
+                        cubeModel.gBufferMat.bindGroup = bindGroup;
+                    }
+                
+
+                this.renderer.addModel(cubeModel);
+
+                this.renderer.addLight(pointLight);
+                this.pointLights.push(pointLight);
+            }
+        });
 
         this.created = true;
     }
 
     update(): void {
         if (!this.created) return;
+
+        for (const pointLight of this.pointLights) {
+            pointLight.position.x += (Math.random() - 0.5) / 60;
+            pointLight.position.y = (pointLight.position.y + (Math.random()) / 60) % 5;
+            pointLight.position.z += (Math.random() - 0.5) / 60;
+        }
     }
 }

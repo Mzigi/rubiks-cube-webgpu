@@ -1,4 +1,5 @@
 import { BindGroupLayout } from "./core/material.js";
+import { LightType } from "./core/light.js";
 export class Renderer {
     canvas;
     context;
@@ -13,6 +14,7 @@ export class Renderer {
     textures = new Map();
     models = [];
     materials = new Map();
+    lights = [];
     success = undefined;
     constructor(canvas) {
         this.canvas = canvas;
@@ -72,6 +74,30 @@ export class Renderer {
             this.models[model.id] = this.models[this.models.length - 1];
             this.models[model.id].id = model.id;
             this.models.pop();
+        }
+    }
+    addLight(light) {
+        light.id = this.lights.length;
+        this.lights.push(light);
+        return light.id;
+    }
+    getLights(lightType = LightType.Virtual) {
+        if (lightType === LightType.Virtual) {
+            return this.lights;
+        }
+        const result = [];
+        for (const light of this.lights) {
+            if (light.static.lightType === lightType) {
+                result.push(light);
+            }
+        }
+        return result;
+    }
+    removeLight(light) {
+        if (light.id !== undefined) {
+            this.lights[light.id] = this.lights[this.lights.length - 1];
+            this.lights[light.id].id = light.id;
+            this.lights.pop();
         }
     }
     getModels() {

@@ -44,6 +44,46 @@ export class Vector3 {
         this.y = y;
         this.z = z;
     }
+
+    clone(): Vector3 {
+        return new Vector3(this.x, this.y, this.z);
+    }
+
+    toArray(): number[] {
+        return [this.x, this.y, this.z];
+    }
+
+    magnitude(): number {
+        return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
+    }
+
+    minus(other: Vector3): Vector3 {
+        return new Vector3(this.x - other.x, this.y - other.y, this.z - other.z);
+    }
+
+    get r(): number {
+        return this.x;
+    }
+
+    get g(): number {
+        return this.y;
+    }
+
+    get b(): number {
+        return this.z;
+    }
+
+    set r(val: number) {
+        this.x = val;
+    }
+
+    set g(val: number) {
+        this.y = val;
+    }
+
+    set b(val: number) {
+        this.z = val;
+    }
 }
 
 /*

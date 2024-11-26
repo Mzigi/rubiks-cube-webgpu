@@ -36,6 +36,36 @@ export class Vector3 {
         this.y = y;
         this.z = z;
     }
+    clone() {
+        return new Vector3(this.x, this.y, this.z);
+    }
+    toArray() {
+        return [this.x, this.y, this.z];
+    }
+    magnitude() {
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    }
+    minus(other) {
+        return new Vector3(this.x - other.x, this.y - other.y, this.z - other.z);
+    }
+    get r() {
+        return this.x;
+    }
+    get g() {
+        return this.y;
+    }
+    get b() {
+        return this.z;
+    }
+    set r(val) {
+        this.x = val;
+    }
+    set g(val) {
+        this.y = val;
+    }
+    set b(val) {
+        this.z = val;
+    }
 }
 /*
 struct Model {

@@ -1,8 +1,8 @@
 import { Model } from "./core/model.js";
 import { RenderGraph } from "./core/renderGraph.js";
 import { Texture } from "./core/texture.js";
-
 import { BindGroupLayout, Material } from "./core/material.js";
+import { Light, LightType } from "./core/light.js";
 
 export class Renderer {
     canvas: HTMLCanvasElement;
@@ -23,6 +23,7 @@ export class Renderer {
     private textures: Map<string, Texture> = new Map();
     private models: Model[] = [];
     private materials: Map<string, Material> = new Map();
+    private lights: Light[] = [];
 
     success: true | false | undefined = undefined;
 
@@ -96,6 +97,37 @@ export class Renderer {
             this.models[model.id] = this.models[this.models.length - 1];
             this.models[model.id].id = model.id;
             this.models.pop();
+        }
+    }
+
+    addLight(light: Light): number {
+        light.id = this.lights.length;
+        this.lights.push(light);
+
+        return light.id;
+    }
+
+    getLights(lightType: LightType = LightType.Virtual): Light[] {
+        if (lightType === LightType.Virtual) {
+            return this.lights;
+        }
+
+        const result: Light[] = [];
+
+        for (const light of this.lights) {
+            if (light.static.lightType === lightType) {
+                result.push(light);
+            }
+        }
+
+        return result;
+    }
+
+    removeLight(light: Light): void {
+        if (light.id !== undefined) {
+            this.lights[light.id] = this.lights[this.lights.length - 1];
+            this.lights[light.id].id = light.id;
+            this.lights.pop();
         }
     }
 
