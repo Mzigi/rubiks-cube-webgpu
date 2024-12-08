@@ -17,6 +17,10 @@ export class App {
     game: Game;
     renderer: Renderer;
 
+    elapsedTime: number = performance.now()/1000;
+    fpsTimer: number = 0;
+    fpsCounter: number = 0;
+
     constructor() {
         this.canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
 
@@ -36,6 +40,20 @@ export class App {
     }
 
     update(): void {
+        const deltaTime: number = performance.now()/1000 - this.elapsedTime;
+        this.fpsCounter += 1;
+        this.fpsTimer += deltaTime;
+
+        if (this.fpsTimer >= 1) {
+            const fpsElement: HTMLElement | null = document.getElementById("fps");
+            if (fpsElement) {
+                fpsElement.innerText = "FPS: " + this.fpsCounter;
+            }
+            this.fpsTimer = 0;
+            this.fpsCounter = 0;
+        }
+        this.elapsedTime = performance.now()/1000;
+
         if (this.renderer.success && this.renderer.renderGraph) {
             this.renderer.render();
         }

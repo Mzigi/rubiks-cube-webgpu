@@ -93,6 +93,14 @@ struct Model {
 }
 */
 
+export class ModelGroup {
+    position: Vector3 = new Vector3(0,0,0);
+    size: Vector3 = new Vector3(1,1,1);
+    rotation: Vector3 = new Vector3(0,0,0);
+
+    models: Model[] = [];
+}
+
 export class Model {
     gBufferMat: MaterialView | undefined;
     shadowMat: MaterialView | undefined;
@@ -115,6 +123,8 @@ export class Model {
     position: Vector3 = new Vector3(0,0,0);
     size: Vector3 = new Vector3(1,1,1);
     rotation: Vector3 = new Vector3(0,0,0);
+
+    modelGroup: ModelGroup | undefined;
 
     constructor(renderer: Renderer, mesh: Mesh, label: string = "Unknown") {
         this.renderer = renderer;
@@ -184,8 +194,11 @@ export class Model {
             //configure passEncoder
             renderPass.passEncoder.setPipeline(materialView.material.getPipeline());
 
+            /*
             renderPass.passEncoder.setBindGroup(0, this.renderer.renderGraph.bindGroup.getBindGroup());
             renderPass.passEncoder.setBindGroup(1, renderPass.static.bindGroup.getBindGroup());
+            */
+
             renderPass.passEncoder.setBindGroup(2, this.modelBindGroup.getBindGroup());
             materialView.setBindGroups(renderPass);
 

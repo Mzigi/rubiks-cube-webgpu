@@ -73,6 +73,12 @@ struct Model {
     normalModelMatrix: mat4x4,
 }
 */
+export class ModelGroup {
+    position = new Vector3(0, 0, 0);
+    size = new Vector3(1, 1, 1);
+    rotation = new Vector3(0, 0, 0);
+    models = [];
+}
 export class Model {
     gBufferMat;
     shadowMat;
@@ -88,6 +94,7 @@ export class Model {
     position = new Vector3(0, 0, 0);
     size = new Vector3(1, 1, 1);
     rotation = new Vector3(0, 0, 0);
+    modelGroup;
     constructor(renderer, mesh, label = "Unknown") {
         this.renderer = renderer;
         this.mesh = mesh;
@@ -142,8 +149,10 @@ export class Model {
             }
             //configure passEncoder
             renderPass.passEncoder.setPipeline(materialView.material.getPipeline());
+            /*
             renderPass.passEncoder.setBindGroup(0, this.renderer.renderGraph.bindGroup.getBindGroup());
             renderPass.passEncoder.setBindGroup(1, renderPass.static.bindGroup.getBindGroup());
+            */
             renderPass.passEncoder.setBindGroup(2, this.modelBindGroup.getBindGroup());
             materialView.setBindGroups(renderPass);
             renderPass.passEncoder.setVertexBuffer(0, this.getVertexBuffer());

@@ -25,6 +25,7 @@ export class RenderPass extends GPUObject {
         this.executeVirtualBefore();
         this.passEncoder = this.renderer.commandEncoder.beginRenderPass(this.getDescriptor());
         this.passEncoder.setBindGroup(0, this.renderGraph.bindGroup.getBindGroup());
+        this.passEncoder.setBindGroup(1, this.static.bindGroup.getBindGroup());
         this.executeVirtual();
         this.passEncoder.end();
     }
