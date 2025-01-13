@@ -50,7 +50,7 @@ export function GetCubeMesh(): Mesh {
             [-1, 1, 1],
             [-1, 1, -1],
 
-            //TOP
+            //BOTTOM
             [-1, -1, -1],
             [1, -1, -1],
             [-1, -1, 1],
@@ -160,7 +160,7 @@ export function GetCubeMesh(): Mesh {
             [1, 1],
             [1, 0],
 
-            //TOP
+            //BOTTOM
             [0, 0],
             [1, 0],
             [0, 1],

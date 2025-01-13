@@ -33,7 +33,7 @@ export class Camera {
     }
 
     getProjectionMatrix(aspect: number): Float32Array {
-        return mat4.perspective(this.fov * Math.PI / 180, aspect, this.nearZ, this.farZ);;
+        return mat4.perspective(this.fov * Math.PI / 180, aspect, this.nearZ, this.farZ);
     }
 
     getDirectionVector(): Vector3 {
